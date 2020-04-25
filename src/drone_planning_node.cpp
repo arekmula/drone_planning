@@ -1,28 +1,11 @@
 
 // ROS
 #include <ros/ros.h>
-#include <octomap/octomap.h>
-#include <octomap_msgs/Octomap.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <nav_msgs/Path.h>
+#include "../include/drone_planning/drone_planning.hpp"
+
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
-#include <sensor_msgs/point_cloud_conversion.h>
-#include <boost/foreach.hpp>
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/PoseWithCovariance.h>
-#include <geometry_msgs/Point.h>
-#include <geometry_msgs/Quaternion.h>
-#include <geometry_msgs/Twist.h>
-#include <geometry_msgs/PoseStamped.h>
 
-#include <octomap_ros/conversions.h>
-#include <grid_map_octomap/GridMapOctomapConverter.hpp>
-#include <grid_map_octomap/grid_map_octomap.hpp>
-#include <moveit/ompl_interface/ompl_interface.h>
-#include <ompl/geometric/planners/rrt/RRTConnect.h>
-#include <ompl/geometric/planners/prm/LazyPRMstar.h>
-#include <ompl/base/spaces/RealVectorStateSpace.h>
 
 // Eigen
 #include <eigen3/Eigen/Core>
@@ -98,49 +81,33 @@ void markerArrayCallback(const visualization_msgs::MarkerArrayPtr& mArray)
 
 int main(int argc, char **argv)
 {
+  // init ROS node
   ros::init(argc, argv, "drone_planner");
-  ros::NodeHandle node("~");
 
+  // create node handler
+  ros::NodeHandle node("~");
+  drone_planning::Planner3D planner_(node);
+
+  //setup ROS lopp rate
   ros::Rate loop_rate(1);
 
-
+  //subscribers to full octomap, octomap point cloud and markerArray
   ros::Subscriber octomapFull_sub = node.subscribe("/octomap_full", 10, octomapCallback);
   ros::Subscriber octmapPointCloud_sub = node.subscribe("/octomap_point_cloud_centers", 10, pointCloudCallback); // Wspolrzedne zajetych voxeli
   ros::Subscriber occupied_cells_vis_array_sub = node.subscribe("/occupied_cells_vis_array", 10, markerArrayCallback);
 
+  // path Publisher
   ros::Publisher path_pub = node.advertise<nav_msgs::Path>("my_path",1000);
 
   while (ros::ok()){
-      nav_msgs::Path myPath;
-      myPath.header.stamp = ros::Time::now();
-      myPath.header.frame_id = "odom";
+      nav_msgs::Path examplePath;
 
-      geometry_msgs::PoseStamped pose1;
-      pose1.pose.position.x = 0;
-      pose1.pose.position.y = 0;
-      pose1.pose.position.z = 0;
-      pose1.pose.orientation.x = 0;
-      pose1.pose.orientation.y = 0;
-      pose1.pose.orientation.z = 0;
-      pose1.pose.orientation.w = 1;
-      pose1.header.frame_id = "/odom";
-      pose1.header.stamp = ros::Time::now();
+      // counting path
+      examplePath = planner_.planPath(globalOctoMap, globalPointCloud);
 
-      myPath.poses.push_back(pose1);
+      // publishing path
+      path_pub.publish(examplePath);
 
-      geometry_msgs::PoseStamped pose2;
-      pose2.pose.position.x = 0;
-      pose2.pose.position.y = 0;
-      pose2.pose.position.z = 1;
-      pose2.pose.orientation.x = 0;
-      pose2.pose.orientation.y = 0;
-      pose2.pose.orientation.z = 0;
-      pose2.pose.orientation.w = 1;
-      pose2.header.frame_id = "/odom";
-      pose2.header.stamp = ros::Time::now();
-      myPath.poses.push_back(pose2);
-
-      path_pub.publish(myPath);
       ros::spinOnce();
       loop_rate.sleep();
 }

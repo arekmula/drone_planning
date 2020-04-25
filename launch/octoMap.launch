@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<launch>
- 
-    <node pkg="drone_planning" type="drone_planning" name="octoMap" output="screen"/>
-    
-</launch>

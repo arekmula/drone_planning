@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+ 
+    <node pkg="drone_planning" type="drone_planning_node" name="drone_planning_node" output="screen"/>
+    
+</launch>
