@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
- 
+    <arg name="rvizconfig" default="$(find drone_planning)/rviz/drone_planning.rviz" /> 
+	
+    <node pkg="rviz" name="rviz" type="rviz" output="screen" args="-d $(arg rvizconfig)"/> 
+
     <node pkg="drone_planning" type="drone_planning_node" name="drone_planning_node" output="screen"/>
     
 </launch>
