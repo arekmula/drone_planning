@@ -19,6 +19,7 @@ Planner3D::~Planner3D()
 nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap &globalOctoMap, const sensor_msgs::PointCloud2 &globalPointCloud)
 {
     /// drawing test path
+    // Test pull request
     nav_msgs::Path myPath;
     myPath.header.stamp = ros::Time::now();
     myPath.header.frame_id = "odom";
