@@ -103,7 +103,7 @@ int main(int argc, char **argv)
       nav_msgs::Path examplePath;
 
       // counting path
-      examplePath = planner_.planPath(globalOctoMap, globalPointCloud);
+      examplePath = planner_.examplePath(globalOctoMap, globalPointCloud);
 
       // publishing path
       path_pub.publish(examplePath);
