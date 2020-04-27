@@ -55,6 +55,16 @@ nav_msgs::Path Planner3D::examplePath(const octomap_msgs::Octomap &globalOctoMap
 nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap &globalOctoMap, const sensor_msgs::PointCloud2 &globalPointCloud)
 {
 
+     nav_msgs::Path myPath;
+    // search space information
+
+     //// ******************* NEXT LINE CAUSING ERRORS *****************
+     //    auto si(std::make_shared<ompl::base::SpaceInformation>(space));
+    
+    
+    // define state checking callback
+
+    return myPath;
 }
 
 void Planner3D::configure(void)
