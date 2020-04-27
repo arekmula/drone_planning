@@ -17,9 +17,11 @@
 #include <grid_map_octomap/GridMapOctomapConverter.hpp>
 #include <grid_map_octomap/grid_map_octomap.hpp>
 #include <moveit/ompl_interface/ompl_interface.h>
+
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 #include <ompl/geometric/planners/prm/LazyPRMstar.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <ompl/base/spaces/RealVectorBounds.h>
 
 // Eigen
 #include <eigen3/Eigen/Core>
@@ -60,11 +62,36 @@ public:
      * @param globalOctoMap Octomap of enviroment
      * @param globalPointCloud point cloud of enviroment
      */
+    nav_msgs::Path examplePath(const octomap_msgs::Octomap& globalOctoMap, const sensor_msgs::PointCloud2& globalPointCloud );
     nav_msgs::Path planPath(const octomap_msgs::Octomap& globalOctoMap, const sensor_msgs::PointCloud2& globalPointCloud );
+
 
 private:
     /// node handle
     ros::NodeHandle& nodeHandle;
+
+    /// problem dimension
+    int dim;
+
+    /// max step Length
+    double maxStepLength;
+
+    /// bounds for the all axes
+    std::shared_ptr<ompl::base::RealVectorBounds> coordXBound;
+    std::shared_ptr<ompl::base::RealVectorBounds> coordYBound;
+    std::shared_ptr<ompl::base::RealVectorBounds> coordZBound;
+
+    /// start position
+    std::shared_ptr<ompl::base::ScopedState<>> start;
+
+    /// goal position
+    std::shared_ptr<ompl::base::ScopedState<>> goal;
+
+    /// serach space
+    std::shared_ptr<ompl::base::StateSpace> space;
+
+
+    void configure(void);
 };
 
 }

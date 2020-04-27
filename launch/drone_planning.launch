@@ -5,5 +5,10 @@
     <node pkg="rviz" name="rviz" type="rviz" output="screen" args="-d $(arg rvizconfig)"/> 
 
     <node pkg="drone_planning" type="drone_planning_node" name="drone_planning_node" output="screen"/>
+
+	<param name="robot_description" command="$(find xacro)/xacro.py $(find drone_planning)/urdf/quadrotor.urdf.xacro" />
+	<param name="use_gui" value="True"/>
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" ></node>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
     
 </launch>

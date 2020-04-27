@@ -65,6 +65,7 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>octomap_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
+  <depend>ompl</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
