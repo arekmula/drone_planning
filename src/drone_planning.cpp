@@ -59,7 +59,7 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap &globalOctoMap, c
     // search space information
 
      //// ******************* NEXT LINE CAUSING ERRORS *****************
-     //    auto si(std::make_shared<ompl::base::SpaceInformation>(space));
+    auto si(std::make_shared<ompl::base::SpaceInformation>(space));
     
     
     // define state checking callback
