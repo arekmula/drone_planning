@@ -56,16 +56,39 @@ nav_msgs::Path Planner3D::examplePath(const octomap_msgs::Octomap &globalOctoMap
 nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap &globalOctoMap, const sensor_msgs::PointCloud2 &globalPointCloud)
 {
 
-     nav_msgs::Path myPath;
     // search space information
-
-     //// ******************* NEXT LINE CAUSING ERRORS *****************
     auto si(std::make_shared<ompl::base::SpaceInformation>(space));
-    
-    
-    // define state checking callback
 
-    return myPath;
+    // TODO: define state checking callback
+    //si->setStateValidityChecker(isStateValid);
+
+    //set State Validity Checking Resolution (avoid going through the walls)
+    si->setStateValidityCheckingResolution(0.001);
+
+    // problem definition
+    auto pdef(std::make_shared<ompl::base::ProblemDefinition>(si));
+    pdef->setStartAndGoalStates(*start.get(), *goal.get());
+
+    // create planner
+    auto planner(std::make_shared<ompl::geometric::RRTConnect>(si));
+
+    //configure planner
+    planner->setRange(maxStepLength);
+    planner->setProblemDefinition(pdef);
+    planner->setup();
+
+    ompl::base::PlannerStatus solved = planner->ompl::base::Planner::solve(1.0);
+
+    nav_msgs::Path plannedPath;
+
+    if(solved)
+    {
+        //TODO: create extractPath function
+        //plannedPath = extractPath(pdef.get());
+    }
+    
+
+    return plannedPath;
 }
 
 void Planner3D::configure(void)
@@ -73,6 +96,7 @@ void Planner3D::configure(void)
     dim = 3; //3D Problem
     maxStepLength = 0.1; // max step length
 
+    //TODO: create correct bounds for all axes based on our enviroment
     /// create bounds for x axis
     coordXBound.reset(new ompl::base::RealVectorBounds(dim-1));
     coordXBound->setLow(-1.0);
@@ -99,6 +123,8 @@ void Planner3D::configure(void)
     coordY->setBounds(*coordYBound.get());
     coordZ->setBounds(*coordZBound.get());
 
+
+    // TODO: define proper start and goal positions based on our enviroment
     /// define the start position
     start.reset(new ompl::base::ScopedState<>(space));
     (*start.get())[0]=0.0;
