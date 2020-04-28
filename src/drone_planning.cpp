@@ -84,27 +84,14 @@ nav_msgs::Path Planner3D::extractPath(ompl::base::ProblemDefinition *pdef)
     ompl::base::PathPtr path = pdef->getSolutionPath();
 
     //print the path to screen
-    std::cout << "Printing path 1" << "\n";
+    std::cout << "Printing path start" << "\n";
     path->print(std::cout);
-    std::cout << "Printing path 2" << "\n";
+    std::cout << "Printing path end" << "\n";
 
     //convert to geometric path
     const auto *path_ = path.get()->as<ompl::geometric::PathGeometric>();
-    std::cout << "Printing geometric path " << "\n";
-    path_->print(std::cout);
-
-//    const std::vector<ompl::base::State*> &states = path_->getStates();
-//    ompl::base::State *state;
-
-//    for(size_t i=0; i<states.size();++i)
-//    {
-//        state = states[i]->as<ompl::base::State>();
-////        const auto *coordX = state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0];
-////        const auto *coordY = state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1];
-////        const auto *coordZ = state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2];
 
 
-    //}
 
     // iterate over each position
    for(unsigned int i=0; i<path_->getStateCount(); ++i)
@@ -128,7 +115,8 @@ nav_msgs::Path Planner3D::extractPath(ompl::base::ProblemDefinition *pdef)
         poseMsg.pose.orientation.z = 0.0;
         poseMsg.header.frame_id = "/odom";
         poseMsg.header.stamp = ros::Time::now();
-        std::cout <<"Position: " << poseMsg.pose.position << "\n";
+        std::cout <<"PoseMsg position: " << "\n";
+        std::cout <<poseMsg.pose.position << "\n";
         plannedPath.poses.push_back(poseMsg);
     }
     return plannedPath;
@@ -202,7 +190,7 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap &globalOctoMap, c
     auto pdef(std::make_shared<ompl::base::ProblemDefinition>(si));
     pdef->setStartAndGoalStates(start, goal);
 
-    auto planner(std::make_shared<ompl::geometric::RRTConnect>(si));
+    auto planner(std::make_shared<ompl::geometric::LazyPRMstar>(si));
     planner->setProblemDefinition(pdef);
     planner->setup();
 
