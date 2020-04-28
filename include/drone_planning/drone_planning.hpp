@@ -12,6 +12,7 @@
 #include <octomap/octomap.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <nav_msgs/Path.h>
+#include <nav_msgs/OccupancyGrid.h>
 
 #include <octomap_ros/conversions.h>
 #include <grid_map_octomap/GridMapOctomapConverter.hpp>
@@ -22,6 +23,8 @@
 #include <ompl/geometric/planners/prm/LazyPRMstar.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <ompl/base/spaces/RealVectorBounds.h>
+#include <ompl/base/spaces/SE3StateSpace.h>
+#include <moveit/ompl_interface/ompl_interface.h>
 
 // Eigen
 #include <eigen3/Eigen/Core>
@@ -84,14 +87,18 @@ private:
     /// start position
     std::shared_ptr<ompl::base::ScopedState<>> start;
 
-    /// goal position
+//    /// goal position
     std::shared_ptr<ompl::base::ScopedState<>> goal;
 
     /// serach space
-    std::shared_ptr<ompl::base::StateSpace> space;
 
+
+//    ompl::base::RealVectorBounds bounds;
 
     void configure(void);
+
+
+    nav_msgs::Path extractPath(ompl::base::ProblemDefinition* pdef);
 };
 
 }
