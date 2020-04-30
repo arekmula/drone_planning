@@ -65,7 +65,6 @@ public:
      * @param globalOctoMap Octomap of enviroment
      * @param globalPointCloud point cloud of enviroment
      */
-    nav_msgs::Path examplePath(const octomap_msgs::Octomap& globalOctoMap, const sensor_msgs::PointCloud2& globalPointCloud );
     nav_msgs::Path planPath(const octomap_msgs::Octomap& globalOctoMap, const sensor_msgs::PointCloud2& globalPointCloud );
 
 
@@ -79,25 +78,20 @@ private:
     /// max step Length
     double maxStepLength;
 
-    /// bounds for the all axes
-    std::shared_ptr<ompl::base::RealVectorBounds> coordXBound;
-    std::shared_ptr<ompl::base::RealVectorBounds> coordYBound;
-    std::shared_ptr<ompl::base::RealVectorBounds> coordZBound;
+    /// bounds for all dimensions
+    std::shared_ptr<ompl::base::RealVectorBounds> bounds;
 
-    /// start position
+    /// starting and goal position
     std::shared_ptr<ompl::base::ScopedState<>> start;
-
-//    /// goal position
     std::shared_ptr<ompl::base::ScopedState<>> goal;
 
-    /// serach space
+    /// space of problem
+    std::shared_ptr<ompl::base::SE3StateSpace> space;
 
-
-//    ompl::base::RealVectorBounds bounds;
-
+    /// configure
     void configure(void);
 
-
+    /// extract path function
     nav_msgs::Path extractPath(ompl::base::ProblemDefinition* pdef);
 };
 
