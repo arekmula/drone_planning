@@ -28,6 +28,7 @@
 
 octomap_msgs::Octomap globalOctoMap; // To chyba przekazywac do funkcji z FCLa, bo to jest OcTree
 sensor_msgs::PointCloud2 globalPointCloud; // Wspolrzedne zajetych voxeli
+nav_msgs::OccupancyGrid globalOccupancyMap;
 visualization_msgs::MarkerArray markerArray;
 
 void octomapCallback(const octomap_msgs::OctomapPtr& octMap)
@@ -79,34 +80,45 @@ void markerArrayCallback(const visualization_msgs::MarkerArrayPtr& mArray)
 
 }
 
+void occupancyMapCallback(const nav_msgs::OccupancyGridPtr& oMap)
+{
+    globalOccupancyMap = *oMap;
+    std::cout << " " << "\n";
+    std::cout << "Occupancy map resolution: " << globalOccupancyMap.info.resolution << "\n";
+    std::cout << "Occupancy map width: " << globalOccupancyMap.info.width << "\n";
+    std::cout << "Occupancy map height: " << globalOccupancyMap.info.height << "\n";
+    std::cout << "Occupancy map origin: " << globalOccupancyMap.info.origin << "\n";
+}
+
 int main(int argc, char **argv)
 {
-  // init ROS node
+  /// init ROS node
   ros::init(argc, argv, "drone_planner");
 
-  // create node handler
+  ///  create node handler
   ros::NodeHandle node("~");
   drone_planning::Planner3D planner_(node);
 
-  //setup ROS lopp rate
+  /// setup ROS lopp rate
   ros::Rate loop_rate(1);
 
-  //subscribers to full octomap, octomap point cloud and markerArray
+  /// subscribers to full octomap, octomap point cloud and markerArray
   ros::Subscriber octomapFull_sub = node.subscribe("/octomap_full", 10, octomapCallback);
   ros::Subscriber octmapPointCloud_sub = node.subscribe("/octomap_point_cloud_centers", 10, pointCloudCallback); // Wspolrzedne zajetych voxeli
   ros::Subscriber occupied_cells_vis_array_sub = node.subscribe("/occupied_cells_vis_array", 10, markerArrayCallback);
+  ros::Subscriber occupancyMap_sub = node.subscribe("/projected_map", 10, occupancyMapCallback);
 
-  // path Publisher
+  /// path Publisher
   ros::Publisher path_pub = node.advertise<nav_msgs::Path>("my_path",1000);
 
   while (ros::ok()){
-      nav_msgs::Path examplePath;
+      nav_msgs::Path plannedPath;
 
-      // counting path
-      examplePath = planner_.examplePath(globalOctoMap, globalPointCloud);
+      /// calculating path
+      plannedPath = planner_.planPath(globalOctoMap, globalPointCloud);
 
-      // publishing path
-      path_pub.publish(examplePath);
+      /// publishing path
+      path_pub.publish(plannedPath);
 
       ros::spinOnce();
       loop_rate.sleep();

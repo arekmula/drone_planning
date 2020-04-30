@@ -17,127 +17,144 @@ Planner3D::~Planner3D()
 {
 }
 
-nav_msgs::Path Planner3D::examplePath(const octomap_msgs::Octomap &globalOctoMap, const sensor_msgs::PointCloud2 &globalPointCloud)
+bool isStateValid(const ompl::base::State *state)
 {
-    /// drawing test path
-    // Test pull request
-    nav_msgs::Path myPath;
-    myPath.header.stamp = ros::Time::now();
-    myPath.header.frame_id = "/odom";
+    // TODO: WHOLE FUNCTION
+    /// get coords of the robot
+    const auto *coordX = state->as<ompl::base::CompoundState>()
+            ->as<ompl::base::RealVectorStateSpace::StateType>(0);
+    const auto *coordY = state->as<ompl::base::CompoundState>()
+                ->as<ompl::base::RealVectorStateSpace::StateType>(1);
+    const auto *coordZ = state->as<ompl::base::CompoundState>()
+            ->as<ompl::base::RealVectorStateSpace::StateType>(2);
 
-    geometry_msgs::PoseStamped pose1;
-    pose1.pose.position.x = 0;
-    pose1.pose.position.y = 0;
-    pose1.pose.position.z = 0;
-    pose1.pose.orientation.x = 0;
-    pose1.pose.orientation.y = 0;
-    pose1.pose.orientation.z = 0;
-    pose1.pose.orientation.w = 1;
-    pose1.header.frame_id = "/odom";
-    pose1.header.stamp = ros::Time::now();
+    //! Comment this part of code if you'd like to use octomap
+     //define the obstacle
+//    if (coordX->values[0]<5.1&&coordX->values[0]>5.0){
+//        if (coordY->values[0]<4.0&&coordY->values[0]>-5.0){
+//            return false;
+//        }
+//    }
+    //! Comment this part of code if you'd like to use octomap
 
-    myPath.poses.push_back(pose1);
+    return true;
+}
 
-    geometry_msgs::PoseStamped pose2;
-    pose2.pose.position.x = 0;
-    pose2.pose.position.y = 0;
-    pose2.pose.position.z = 1;
-    pose2.pose.orientation.x = 0;
-    pose2.pose.orientation.y = 0;
-    pose2.pose.orientation.z = 0;
-    pose2.pose.orientation.w = 1;
-    pose2.header.frame_id = "/odom";
-    pose2.header.stamp = ros::Time::now();
-    myPath.poses.push_back(pose2);
 
-    return myPath;
+nav_msgs::Path Planner3D::extractPath(ompl::base::ProblemDefinition *pdef)
+{
+    nav_msgs::Path plannedPath;
+    plannedPath.header.frame_id = "/odom";
+    /// get the obtained path
+    ompl::base::PathPtr path = pdef->getSolutionPath();
+    /// print path to screen
+    path->print(std::cout);
+    /// convert to geometric path
+    const auto*path_ = path.get()->as<ompl::geometric::PathGeometric>();
+    /// iterate over each position
+    for(unsigned int i=0; i<path_->getStateCount();++i)
+    {
+        /// get state
+        const ompl::base::State* state = path_->getState(i);
+        /// get coordinates of robot
+        const auto *coordinates = state->as<ompl::base::CompoundState>()->
+                as<ompl::base::RealVectorStateSpace::StateType>(0);
+        /// fill in the ROS PoseStamped Structure
+        geometry_msgs::PoseStamped poseMsg;
+        poseMsg.pose.position.x = coordinates->values[0];
+        poseMsg.pose.position.y = coordinates->values[1];
+        poseMsg.pose.position.z = coordinates->values[2];
+        poseMsg.pose.orientation.w = 1.0; // in the future this might also be calculated from coordinates, probably [3,4,5,6]
+        poseMsg.pose.orientation.x = 0.0;
+        poseMsg.pose.orientation.y = 0.0;
+        poseMsg.pose.orientation.z = 0.0;
+        poseMsg.header.frame_id = "/odom";
+        poseMsg.header.stamp = ros::Time::now();
+        /// add poseStamped to the path
+        plannedPath.poses.push_back(poseMsg);
+    }
+    return plannedPath;
 }
 
 nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap &globalOctoMap, const sensor_msgs::PointCloud2 &globalPointCloud)
 {
 
-    // search space information
+    /// planned Path
+    nav_msgs::Path plannedPath;
+    /// creating space information for the state space
     auto si(std::make_shared<ompl::base::SpaceInformation>(space));
 
-    // TODO: define state checking callback
-    //si->setStateValidityChecker(isStateValid);
-
-    //set State Validity Checking Resolution (avoid going through the walls)
-    si->setStateValidityCheckingResolution(0.001);
-
-    // problem definition
+    //TODO: create isStateValid function
+    // step1: make it work for self created obstacle
+    // step2: if this works, try to use octomap
+    ///Set the state validity checker
+    si->setStateValidityChecker(isStateValid);
+    /// create problem definition
     auto pdef(std::make_shared<ompl::base::ProblemDefinition>(si));
-    pdef->setStartAndGoalStates(*start.get(), *goal.get());
-
-    // create planner
-    auto planner(std::make_shared<ompl::geometric::RRTConnect>(si));
-
-    //configure planner
-    planner->setRange(maxStepLength);
+    /// set the start and goal states for the problem definiton
+    pdef->setStartAndGoalStates(*start.get(),*goal.get());
+    /// create instance of planner
+    auto planner(std::make_shared<ompl::geometric::LazyPRMstar>(si));
+    /// tell planner which problem we are intrested in solving
     planner->setProblemDefinition(pdef);
+    /// setup the planner, after all settings for the space and planner are done
     planner->setup();
-
+    /// problem status
     ompl::base::PlannerStatus solved = planner->ompl::base::Planner::solve(1.0);
-
-    nav_msgs::Path plannedPath;
-
-    if(solved)
+    /// check if problem is solved
+    if (solved)
     {
-        //TODO: create extractPath function
-        //plannedPath = extractPath(pdef.get());
+        /// extract path from problem definition
+        plannedPath = extractPath(pdef.get());
     }
-    
-
     return plannedPath;
+
 }
 
 void Planner3D::configure(void)
 {
-    dim = 3; //3D Problem
-    maxStepLength = 0.1; // max step length
+    dim = 3; ///3D Problem
+    maxStepLength = 0.1; /// max step length
 
-    //TODO: create correct bounds for all axes based on our enviroment
-    /// create bounds for x axis
-    coordXBound.reset(new ompl::base::RealVectorBounds(dim-1));
-    coordXBound->setLow(-1.0);
-    coordXBound->setHigh(13.0);
+    space.reset(new ompl::base::SE3StateSpace());
 
-    /// create bounds for y axis
-    coordYBound.reset(new ompl::base::RealVectorBounds(dim-1));
-    coordYBound->setLow(-5.0);
-    coordYBound->setHigh(5.0);
+    bounds.reset(new ompl::base::RealVectorBounds(dim));
 
-    /// create bounds for z axis
-    coordZBound.reset(new ompl::base::RealVectorBounds(dim-1));
-    coordZBound->setLow(0.0);
-    coordZBound->setHigh(3.0);
+    // TODO: create proper bounds for each dimension
+    /// Set the lower and higher bound for each dimension.
+    /// x axis
+    bounds->setLow(0, -5.0);
+    bounds->setHigh(0, 15.0);
+    /// y axis
+    bounds->setLow(1,-5.0);
+    bounds->setHigh(1,5.0);
+    /// z axis
+    bounds->setLow(2, 0.0);
+    bounds->setHigh(2, 3.0);
 
-    /// counstruct state space
-    auto coordX(std::make_shared<ompl::base::RealVectorStateSpace>(dim-1));
-    auto coordY(std::make_shared<ompl::base::RealVectorStateSpace>(dim-1));
-    auto coordZ(std::make_shared<ompl::base::RealVectorStateSpace>(dim-1));
-    space = coordX + coordY + coordZ;
+    /// apply bounds to state space
+    space->setBounds(*bounds.get());
 
-    /// create bounds for all axes
-    coordX->setBounds(*coordXBound.get());
-    coordY->setBounds(*coordYBound.get());
-    coordZ->setBounds(*coordZBound.get());
-
-
-    // TODO: define proper start and goal positions based on our enviroment
-    /// define the start position
+    /// define starting state
     start.reset(new ompl::base::ScopedState<>(space));
-    (*start.get())[0]=0.0;
-    (*start.get())[1]=-2.5;
-    (*start.get())[2]=0.1;
 
-    //define the goal position
+    (*start.get())[0]=0.0; /// x
+    (*start.get())[1]=0.0; /// y
+    (*start.get())[2]=0.1; /// z
+    (*start.get())[3]=0.0; /// qx
+    (*start.get())[4]=0.0; /// qy
+    (*start.get())[5]=0.0; /// qz
+    (*start.get())[6]=1.0; /// qw
+
+    /// define goal state
     goal.reset(new ompl::base::ScopedState<>(space));
-    (*goal.get())[0]=12.0;
-    (*goal.get())[1]=-4.0;
-    (*goal.get())[2]=2.0;
-
-
+    (*goal.get())[0]=2.0; /// x
+    (*goal.get())[1]=5.0; /// y
+    (*goal.get())[2]=2.0; /// z
+    (*goal.get())[3]=0.0; /// qx
+    (*goal.get())[4]=0.0; /// qy
+    (*goal.get())[5]=0.0; /// qz
+    (*goal.get())[6]=1.0; /// qw
 
 
 }
