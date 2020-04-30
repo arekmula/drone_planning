@@ -20,22 +20,26 @@ Planner3D::~Planner3D()
 bool isStateValid(const ompl::base::State *state)
 {
     // TODO: WHOLE FUNCTION
-    /// get coords of the robot
-    const auto *coordX = state->as<ompl::base::CompoundState>()
+    /// get current coordinnates of the robot
+    const auto *coordinnates = state->as<ompl::base::CompoundState>()
             ->as<ompl::base::RealVectorStateSpace::StateType>(0);
-    const auto *coordY = state->as<ompl::base::CompoundState>()
-                ->as<ompl::base::RealVectorStateSpace::StateType>(1);
-    const auto *coordZ = state->as<ompl::base::CompoundState>()
-            ->as<ompl::base::RealVectorStateSpace::StateType>(2);
+    /// coordinnates->values[0] means x axis
+    /// coordinnates->values[1] means y axis
+    /// coordinnates->values[2] means z axis
 
-    //! Comment this part of code if you'd like to use octomap
-     //define the obstacle
-//    if (coordX->values[0]<5.1&&coordX->values[0]>5.0){
-//        if (coordY->values[0]<4.0&&coordY->values[0]>-5.0){
-//            return false;
-//        }
-//    }
-    //! Comment this part of code if you'd like to use octomap
+    // comment lines below if you want to use octomap
+    /// define an example obstacle
+    if(coordinnates->values[0]<5.1 && coordinnates->values[0]>1.5) /// x axis
+    {
+        if(coordinnates->values[1]<2.5 && coordinnates->values[1]>0.4) /// y axis
+        {
+            if (coordinnates->values[2]<1.0 && coordinnates->values[2]>0.0) /// z axis
+            {
+                return false;
+            }
+        }
+    }
+    // comment lines above if you want to use octomap
 
     return true;
 }
@@ -84,9 +88,7 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap &globalOctoMap, c
     /// creating space information for the state space
     auto si(std::make_shared<ompl::base::SpaceInformation>(space));
 
-    //TODO: create isStateValid function
-    // step1: make it work for self created obstacle
-    // step2: if this works, try to use octomap
+    //TODO: create isStateValid function that's using octomap
     ///Set the state validity checker
     si->setStateValidityChecker(isStateValid);
     /// create problem definition
@@ -148,9 +150,9 @@ void Planner3D::configure(void)
 
     /// define goal state
     goal.reset(new ompl::base::ScopedState<>(space));
-    (*goal.get())[0]=2.0; /// x
-    (*goal.get())[1]=5.0; /// y
-    (*goal.get())[2]=2.0; /// z
+    (*goal.get())[0]=5.3; /// x
+    (*goal.get())[1]=2.6; /// y
+    (*goal.get())[2]=1.5; /// z
     (*goal.get())[3]=0.0; /// qx
     (*goal.get())[4]=0.0; /// qy
     (*goal.get())[5]=0.0; /// qz

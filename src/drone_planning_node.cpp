@@ -33,16 +33,16 @@ visualization_msgs::MarkerArray markerArray;
 
 void octomapCallback(const octomap_msgs::OctomapPtr& octMap)
 {
-
+  /*!
+  * Octomap callback function
+  * commented lines are examples of getting to octomap data
+  */
     globalOctoMap = *octMap;
     std::cout << "   " << "\n";
     std::cout << "globalMap Resolution: " << globalOctoMap.resolution << "\n";
     std::cout << "globalMap Binary: " << globalOctoMap.binary <<"\n";
     std::cout << "globalMap id: " << globalOctoMap.id << "\n";
     std::cout << "globalMap frameID: " << globalOctoMap.header.frame_id << "\n";
-
-
-
     //    for(int i=0; i < globalMap.data.size(); i++){
     //        std::cout << int(globalMap.data[i]) << "\n";
     //    }
@@ -50,9 +50,11 @@ void octomapCallback(const octomap_msgs::OctomapPtr& octMap)
 
 void pointCloudCallback(const sensor_msgs::PointCloud2Ptr& cloud){
 
+    /*!
+    * PointCloud2 callback function
+    * commented lines are examples of getting to PointCloud data
+    */
 //    std::cout<<int(cloud.data[0])<< "\n";
-
-
 
     globalPointCloud = *cloud;
     std::cout << "   " << "\n";
@@ -60,17 +62,17 @@ void pointCloudCallback(const sensor_msgs::PointCloud2Ptr& cloud){
     std::cout << "PointCloudHeight: " << globalPointCloud.height << "\n";  ///Punkty sa unordered po height=1
     std::cout << "PointCloudWidth: " << globalPointCloud.width << "\n";
 
-
-
 //    std::cout << int(globalPointCloud.data[0]) << "\n";
 //    BOOST_FOREACH(const pcl::PointXYZ& pt, globalPointCloud.data)
 }
 
 void markerArrayCallback(const visualization_msgs::MarkerArrayPtr& mArray)
 {
+    /*!
+    * markerArray callback function
+    * commented lines are examples of getting to markerArray data
+    */
     markerArray = *mArray;
-
-
 //    std::cout << "markerArray.markers.size: " << markerArray.markers.size() << "\n";
 //    std::cout << "markerArray.markers[0].points.size(): " << markerArray.markers[0].points.size() << "\n";
 //    for (int i=0; i<markerArray.markers.size(); i++)
@@ -82,6 +84,11 @@ void markerArrayCallback(const visualization_msgs::MarkerArrayPtr& mArray)
 
 void occupancyMapCallback(const nav_msgs::OccupancyGridPtr& oMap)
 {
+    /*!
+    * occupancy map callback function
+    * commented lines are examples of getting to occupancy data
+    */
+
     globalOccupancyMap = *oMap;
     std::cout << " " << "\n";
     std::cout << "Occupancy map resolution: " << globalOccupancyMap.info.resolution << "\n";
