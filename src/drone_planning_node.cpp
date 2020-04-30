@@ -115,7 +115,7 @@ int main(int argc, char **argv)
       nav_msgs::Path examplePath;
       nav_msgs::Path plannedPath;
       // counting path
-      examplePath = planner_.examplePath(globalOctoMap, globalPointCloud);
+//      examplePath = planner_.examplePath(globalOctoMap, globalPointCloud);
       plannedPath = planner_.planPath(globalOctoMap, globalPointCloud);
 
 
