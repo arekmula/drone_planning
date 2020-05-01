@@ -6,6 +6,9 @@ using namespace ros;
 
 namespace drone_planning{
 
+octomap::OcTree* globalOcTree;
+
+
 Planner3D::Planner3D(ros::NodeHandle& _nodeHandle)
     : nodeHandle(_nodeHandle)
 {
@@ -80,8 +83,20 @@ nav_msgs::Path Planner3D::extractPath(ompl::base::ProblemDefinition *pdef)
     return plannedPath;
 }
 
-nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap &globalOctoMap, const sensor_msgs::PointCloud2 &globalPointCloud)
+nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
 {
+
+    octomap::AbstractOcTree* my_tree = octomap_msgs::fullMsgToMap(octomapMsg); /// octomap messagge to AbstractOcTree
+    globalOcTree = dynamic_cast<octomap::OcTree*>(my_tree); /// casting AbstractOcTree to OcTree
+
+    /// examples of getting to OcTree data
+    double xmax,ymax,zmax,xmin,ymin,zmin;
+    globalOcTree->getMetricMax(xmax, ymax, zmax);
+    globalOcTree->getMetricMin(xmin,ymin,zmin);
+    std::cout <<"Octree resolution: " << globalOcTree->getResolution() << "\n";
+    std::cout <<"Octree maxes :" << xmax <<" "<< ymax <<" " << zmax <<"\n";
+    std::cout <<"Octree mins :" << xmin <<" "<< ymin <<" " << zmin <<"\n";
+
 
     /// planned Path
     nav_msgs::Path plannedPath;
@@ -122,17 +137,17 @@ void Planner3D::configure(void)
 
     bounds.reset(new ompl::base::RealVectorBounds(dim));
 
-    // TODO: create proper bounds for each dimension
     /// Set the lower and higher bound for each dimension.
+    /// Based on data from globalOcTree
     /// x axis
-    bounds->setLow(0, -5.0);
-    bounds->setHigh(0, 15.0);
+    bounds->setLow(0, -7.6);
+    bounds->setHigh(0, 7.85);
     /// y axis
-    bounds->setLow(1,-5.0);
-    bounds->setHigh(1,5.0);
+    bounds->setLow(1,-7.9);
+    bounds->setHigh(1,5.4);
     /// z axis
     bounds->setLow(2, 0.0);
-    bounds->setHigh(2, 3.0);
+    bounds->setHigh(2, 2.35);
 
     /// apply bounds to state space
     space->setBounds(*bounds.get());
