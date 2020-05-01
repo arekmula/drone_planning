@@ -25,27 +25,19 @@
 #include <iomanip>
 
 
-
-octomap_msgs::Octomap globalOctoMap; // To chyba przekazywac do funkcji z FCLa, bo to jest OcTree
-sensor_msgs::PointCloud2 globalPointCloud; // Wspolrzedne zajetych voxeli
+octomap_msgs::Octomap globalOctoMap;
+sensor_msgs::PointCloud2 globalPointCloud;
 nav_msgs::OccupancyGrid globalOccupancyMap;
 visualization_msgs::MarkerArray markerArray;
 
-void octomapCallback(const octomap_msgs::OctomapPtr& octMap)
+void octomapCallback(const octomap_msgs::OctomapPtr& msg)
 {
   /*!
   * Octomap callback function
   * commented lines are examples of getting to octomap data
   */
-    globalOctoMap = *octMap;
-    std::cout << "   " << "\n";
-    std::cout << "globalMap Resolution: " << globalOctoMap.resolution << "\n";
-    std::cout << "globalMap Binary: " << globalOctoMap.binary <<"\n";
-    std::cout << "globalMap id: " << globalOctoMap.id << "\n";
-    std::cout << "globalMap frameID: " << globalOctoMap.header.frame_id << "\n";
-    //    for(int i=0; i < globalMap.data.size(); i++){
-    //        std::cout << int(globalMap.data[i]) << "\n";
-    //    }
+    globalOctoMap = *msg;
+
 }
 
 void pointCloudCallback(const sensor_msgs::PointCloud2Ptr& cloud){
@@ -54,16 +46,8 @@ void pointCloudCallback(const sensor_msgs::PointCloud2Ptr& cloud){
     * PointCloud2 callback function
     * commented lines are examples of getting to PointCloud data
     */
-//    std::cout<<int(cloud.data[0])<< "\n";
-
     globalPointCloud = *cloud;
-    std::cout << "   " << "\n";
-    std::cout << "PointCloudFrameID: " << globalPointCloud.header.frame_id << "\n";
-    std::cout << "PointCloudHeight: " << globalPointCloud.height << "\n";  ///Punkty sa unordered po height=1
-    std::cout << "PointCloudWidth: " << globalPointCloud.width << "\n";
 
-//    std::cout << int(globalPointCloud.data[0]) << "\n";
-//    BOOST_FOREACH(const pcl::PointXYZ& pt, globalPointCloud.data)
 }
 
 void markerArrayCallback(const visualization_msgs::MarkerArrayPtr& mArray)
@@ -73,12 +57,7 @@ void markerArrayCallback(const visualization_msgs::MarkerArrayPtr& mArray)
     * commented lines are examples of getting to markerArray data
     */
     markerArray = *mArray;
-//    std::cout << "markerArray.markers.size: " << markerArray.markers.size() << "\n";
-//    std::cout << "markerArray.markers[0].points.size(): " << markerArray.markers[0].points.size() << "\n";
-//    for (int i=0; i<markerArray.markers.size(); i++)
-//    {
-//            std::cout << "markerArray.markers[i].points.size():" << markerArray.markers[i].points.size() << "\n";
-//    }
+
 
 }
 
@@ -90,11 +69,6 @@ void occupancyMapCallback(const nav_msgs::OccupancyGridPtr& oMap)
     */
 
     globalOccupancyMap = *oMap;
-    std::cout << " " << "\n";
-    std::cout << "Occupancy map resolution: " << globalOccupancyMap.info.resolution << "\n";
-    std::cout << "Occupancy map width: " << globalOccupancyMap.info.width << "\n";
-    std::cout << "Occupancy map height: " << globalOccupancyMap.info.height << "\n";
-    std::cout << "Occupancy map origin: " << globalOccupancyMap.info.origin << "\n";
 }
 
 int main(int argc, char **argv)
@@ -118,11 +92,15 @@ int main(int argc, char **argv)
   /// path Publisher
   ros::Publisher path_pub = node.advertise<nav_msgs::Path>("my_path",1000);
 
+
   while (ros::ok()){
       nav_msgs::Path plannedPath;
 
       /// calculating path
-      plannedPath = planner_.planPath(globalOctoMap, globalPointCloud);
+      if(globalOctoMap.data.size()>0) /// make sure that node has subsribed to octomap data
+      {
+          plannedPath = planner_.planPath(globalOctoMap);
+      }
 
       /// publishing path
       path_pub.publish(plannedPath);

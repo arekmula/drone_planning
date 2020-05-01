@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   octomap_msgs
   ompl
+  octomap_ros
 )
 
 find_package(OMPL)
@@ -110,7 +111,7 @@ find_package(OMPL)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}_library
-  CATKIN_DEPENDS roscpp rospy std_msgs sensor_msgs octomap_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs sensor_msgs octomap_msgs octomap_ros
 #  DEPENDS system_lib
 )
 

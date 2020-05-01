@@ -10,6 +10,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <octomap_msgs/Octomap.h>
 #include <octomap/octomap.h>
+#include <octomap/AbstractOcTree.h>
+#include <octomap/ColorOcTree.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -63,10 +65,9 @@ public:
 
     /*!
      * plan path
-     * @param globalOctoMap Octomap of enviroment
-     * @param globalPointCloud point cloud of enviroment
+     * @param octomapMsg - Octomap message of enviroment
      */
-    nav_msgs::Path planPath(const octomap_msgs::Octomap& globalOctoMap, const sensor_msgs::PointCloud2& globalPointCloud );
+    nav_msgs::Path planPath(const octomap_msgs::Octomap& octomapMsg);
 
 
 private:
