@@ -41,6 +41,7 @@ bool isStateValid(const ompl::base::State *state)
     }
     // comment lines above if you want to use octomap
 
+
     return true;
 }
 
@@ -82,7 +83,6 @@ nav_msgs::Path Planner3D::extractPath(ompl::base::ProblemDefinition *pdef)
 
 nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap &globalOctoMap, const sensor_msgs::PointCloud2 &globalPointCloud)
 {
-
     /// planned Path
     nav_msgs::Path plannedPath;
     /// creating space information for the state space
@@ -122,14 +122,17 @@ void Planner3D::configure(void)
 
     bounds.reset(new ompl::base::RealVectorBounds(dim));
 
-    // TODO: create proper bounds for each dimension
+    /// map resolution = 0.05, map width = 309, map height = 268
+    /// real width = 15.45m, real height = 13.4m
+    /// origin of the map is = (-7,6, -7.95, 0) -> this is real pose of (0,0) in occupancy map
+
     /// Set the lower and higher bound for each dimension.
     /// x axis
-    bounds->setLow(0, -5.0);
-    bounds->setHigh(0, 15.0);
+    bounds->setLow(0, -7.6);
+    bounds->setHigh(0, 7.85);
     /// y axis
-    bounds->setLow(1,-5.0);
-    bounds->setHigh(1,5.0);
+    bounds->setLow(1,-7.95);
+    bounds->setHigh(1,5.45);
     /// z axis
     bounds->setLow(2, 0.0);
     bounds->setHigh(2, 3.0);
