@@ -44,6 +44,7 @@ bool isStateValid(const ompl::base::State *state)
     }
     // comment lines above if you want to use octomap
 
+
     return true;
 }
 
@@ -97,7 +98,6 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
     std::cout <<"Octree maxes :" << xmax <<" "<< ymax <<" " << zmax <<"\n";
     std::cout <<"Octree mins :" << xmin <<" "<< ymin <<" " << zmin <<"\n";
 
-
     /// planned Path
     nav_msgs::Path plannedPath;
     /// creating space information for the state space
@@ -137,14 +137,17 @@ void Planner3D::configure(void)
 
     bounds.reset(new ompl::base::RealVectorBounds(dim));
 
+
     /// Set the lower and higher bound for each dimension.
     /// Based on data from globalOcTree
     /// x axis
     bounds->setLow(0, -7.6);
     bounds->setHigh(0, 7.85);
     /// y axis
+
     bounds->setLow(1,-7.9);
     bounds->setHigh(1,5.4);
+
     /// z axis
     bounds->setLow(2, 0.0);
     bounds->setHigh(2, 2.35);
