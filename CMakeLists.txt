@@ -15,9 +15,11 @@ find_package(catkin REQUIRED COMPONENTS
   octomap_msgs
   ompl
   octomap_ros
+  fcl
 )
 
 find_package(OMPL)
+find_package(fcl REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -125,6 +127,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/include
+  ${fcl_INCLUDE_DIRS}
 )
 
 file(GLOB drone_planning_sources
@@ -173,6 +176,7 @@ target_link_libraries(${PROJECT_NAME}_node
   # if it's not working uncomment line under this one and comment next one
   #ompl
   ${OMPL_LIBRARIES}
+  fcl
 )
 
 #############

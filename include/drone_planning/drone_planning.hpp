@@ -16,6 +16,13 @@
 #include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
 
+
+#include <fcl/config.h>
+#include <fcl/geometry/octree/octree.h>
+#include <fcl/common/types.h>
+#include <fcl/octree.h>
+#include <fcl/data_types.h>
+
 #include <octomap_ros/conversions.h>
 #include <grid_map_octomap/GridMapOctomapConverter.hpp>
 #include <grid_map_octomap/grid_map_octomap.hpp>
