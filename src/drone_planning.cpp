@@ -4,9 +4,12 @@
 using namespace std;
 using namespace ros;
 
+
+
 namespace drone_planning{
 
-octomap::OcTree* globalOcTree;
+octomap::OcTree* globalOctomapOcTree;
+fcl::OcTree<double>* globalFCLOcTree;
 
 
 Planner3D::Planner3D(ros::NodeHandle& _nodeHandle)
@@ -51,6 +54,8 @@ bool isStateValid(const ompl::base::State *state)
 
 nav_msgs::Path Planner3D::extractPath(ompl::base::ProblemDefinition *pdef)
 {
+
+
     nav_msgs::Path plannedPath;
     plannedPath.header.frame_id = "/odom";
     /// get the obtained path
@@ -87,16 +92,21 @@ nav_msgs::Path Planner3D::extractPath(ompl::base::ProblemDefinition *pdef)
 nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
 {
 
-    octomap::AbstractOcTree* my_tree = octomap_msgs::fullMsgToMap(octomapMsg); /// octomap messagge to AbstractOcTree
-    globalOcTree = dynamic_cast<octomap::OcTree*>(my_tree); /// casting AbstractOcTree to OcTree
+    octomap::AbstractOcTree* my_tree = octomap_msgs::fullMsgToMap(octomapMsg); /// octomap message to AbstractOcTree
+    globalOctomapOcTree = dynamic_cast<octomap::OcTree*>(my_tree); /// casting AbstractOcTree to OcTree
 
-    /// examples of getting to OcTree data
+    /// examples of getting to octomap::OcTree data
     double xmax,ymax,zmax,xmin,ymin,zmin;
-    globalOcTree->getMetricMax(xmax, ymax, zmax);
-    globalOcTree->getMetricMin(xmin,ymin,zmin);
-    std::cout <<"Octree resolution: " << globalOcTree->getResolution() << "\n";
+    globalOctomapOcTree->getMetricMax(xmax, ymax, zmax);
+    globalOctomapOcTree->getMetricMin(xmin,ymin,zmin);
+    std::cout <<"Octree resolution: " << globalOctomapOcTree->getResolution() << "\n";
     std::cout <<"Octree maxes :" << xmax <<" "<< ymax <<" " << zmax <<"\n";
     std::cout <<"Octree mins :" << xmin <<" "<< ymin <<" " << zmin <<"\n";
+
+    //TODO: Use this OcTree to check collision
+    /// converting from octomap::OcTree to fcl::OcTree
+    globalFCLOcTree = new fcl::OcTree<double>(std::shared_ptr<const octomap::OcTree>(globalOctomapOcTree));
+    std::cout << globalFCLOcTree->getDefaultOccupancy() << "\n"; /// example of getting to FCL:OcTree data
 
     /// planned Path
     nav_msgs::Path plannedPath;
