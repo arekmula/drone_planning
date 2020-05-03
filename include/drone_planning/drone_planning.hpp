@@ -15,6 +15,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <ros/package.h>
 
 
 #include <fcl/config.h>
@@ -22,6 +23,10 @@
 #include <fcl/common/types.h>
 #include <fcl/octree.h>
 #include <fcl/data_types.h>
+#include <fcl/math/vec_3f.h>
+#include <fcl/math/math_details.h>
+#include <cmath>
+#include <limits>
 
 #include <octomap_ros/conversions.h>
 #include <grid_map_octomap/GridMapOctomapConverter.hpp>
@@ -51,6 +56,8 @@
 #include <thread>
 #include <fstream>
 #include <iomanip>
+
+
 
 
 
@@ -102,6 +109,10 @@ private:
 
     /// extract path function
     nav_msgs::Path extractPath(ompl::base::ProblemDefinition* pdef);
+
+    /// robot mesh, points or triangles, depends on mesh type
+    std::vector<fcl::Vec3f> meshPoints;
+    std::vector<fcl::Triangle> meshTriangles;
 };
 
 }

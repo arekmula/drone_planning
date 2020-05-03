@@ -10,6 +10,8 @@ namespace drone_planning{
 
 octomap::OcTree* globalOctomapOcTree;
 fcl::OcTree<double>* globalFCLOcTree;
+std::vector<fcl::Vec3f> points;
+std::vector<fcl::Triangle> triangles;
 
 
 Planner3D::Planner3D(ros::NodeHandle& _nodeHandle)
@@ -51,6 +53,129 @@ bool isStateValid(const ompl::base::State *state)
     return true;
 }
 
+void loadRobotMesh1(const char* filename, std::vector<fcl::Vec3f>& points, std::vector<fcl::Triangle>& triangles){
+
+
+  FILE* file = fopen(filename, "rb");
+  if(!file)
+  {
+    std::cout << "file not exist" << "\n";
+    return;
+  }
+  else{
+      std::cout << "Started reading mesh data" << "\n";
+  }
+
+  bool has_normal = false;
+  bool has_texture = false;
+  char line_buffer[2000];
+  while(fgets(line_buffer, 2000, file))
+  {
+    char* first_token = strtok(line_buffer, "\r\n\t ");
+    if(!first_token || first_token[0] == '#' || first_token[0] == 0)
+      continue;
+
+    switch(first_token[0])
+    {
+    case 'v':
+      {
+        std::cout << "v" << "\n";
+        if(first_token[1] == 'n')
+        {
+          strtok(NULL, "\t ");
+          strtok(NULL, "\t ");
+          strtok(NULL, "\t ");
+          has_normal = true;
+        }
+        else if(first_token[1] == 't')
+        {
+          strtok(NULL, "\t ");
+          strtok(NULL, "\t ");
+          has_texture = true;
+        }
+        else
+        {
+          fcl::FCL_REAL x = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
+          fcl::FCL_REAL y = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
+          fcl::FCL_REAL z = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
+          fcl::Vec3f p(x, y, z);
+          points.push_back(p);
+        }
+      }
+      break;
+    case 'f':
+      {
+        std::cout << "f" << "\n";
+        fcl::Triangle tri;
+        char* data[30];
+        int n = 0;
+        while((data[n] = strtok(NULL, "\t \r\n")) != NULL)
+        {
+          if(strlen(data[n]))
+            n++;
+        }
+
+        for(int t = 0; t < (n - 2); ++t)
+        {
+          if((!has_texture) && (!has_normal))
+          {
+            tri[0] = atoi(data[0]) - 1;
+            tri[1] = atoi(data[1]) - 1;
+            tri[2] = atoi(data[2]) - 1;
+          }
+          else
+          {
+            const char *v1;
+            for(int i = 0; i < 3; i++)
+            {
+              // vertex ID
+              if(i == 0)
+                v1 = data[0];
+              else
+                v1 = data[t + i];
+
+              tri[i] = atoi(v1) - 1;
+            }
+          }
+          triangles.push_back(tri);
+        }
+      }
+    }
+}
+}
+
+void loadRobotMesh2(const char* filename, std::vector<fcl::Vec3f>& points)
+{
+    std::ifstream file;
+    file.open(filename);
+    if(!file)
+    {
+        std::cout << "Can't open mesh file" << "\n";
+    }
+    else{
+        std::cout << "Opened mesh file" << "\n";
+    }
+    std::string line;
+    while(std::getline(file,line))
+    {
+        std::string text;
+
+        file >>text;
+//        std::cout << text << "\n";
+
+        if(text=="v")
+        {
+            fcl::FCL_REAL x, y, z;
+            file >> x;
+            file >> y;
+            file >> z;
+            std::cout <<"x, y, z" <<  x << y << z;
+            fcl::Vec3f p(x, y, z);
+            points.push_back(p);
+        }
+    }
+
+}
 
 nav_msgs::Path Planner3D::extractPath(ompl::base::ProblemDefinition *pdef)
 {
@@ -103,7 +228,10 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
     std::cout <<"Octree maxes :" << xmax <<" "<< ymax <<" " << zmax <<"\n";
     std::cout <<"Octree mins :" << xmin <<" "<< ymin <<" " << zmin <<"\n";
 
-    //TODO: Use this OcTree to check collision
+    std::cout <<"meshPoints size " <<  points.size() << "\n";
+    std::cout <<"meshTriangles size " <<  triangles.size() << "\n";
+
+    //TODO: Use this OcTree below to check collision
     /// converting from octomap::OcTree to fcl::OcTree
     globalFCLOcTree = new fcl::OcTree<double>(std::shared_ptr<const octomap::OcTree>(globalOctomapOcTree));
     std::cout << globalFCLOcTree->getDefaultOccupancy() << "\n"; /// example of getting to FCL:OcTree data
@@ -142,6 +270,14 @@ void Planner3D::configure(void)
 {
     dim = 3; ///3D Problem
     maxStepLength = 0.1; /// max step length
+
+    /// load mesh of robot
+    string meshPath =  ros::package::getPath("drone_planning") + "/meshes/quadrotor/quadrotor_base.dae"; /// tried .dae .stl. obj
+
+    /// two example functions of loading mesh, not working currently, maybe because of file structure (try assimp?)
+    //loadRobotMesh1(meshPath.c_str(), points, triangles);
+    loadRobotMesh2(meshPath.c_str(), points);
+
 
     space.reset(new ompl::base::SE3StateSpace());
 
@@ -185,6 +321,11 @@ void Planner3D::configure(void)
     (*goal.get())[4]=0.0; /// qy
     (*goal.get())[5]=0.0; /// qz
     (*goal.get())[6]=1.0; /// qw
+
+
+
+
+
 
 
 }
