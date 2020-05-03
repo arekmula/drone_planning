@@ -272,7 +272,7 @@ void Planner3D::configure(void)
     maxStepLength = 0.1; /// max step length
 
     /// load mesh of robot
-    string meshPath =  ros::package::getPath("drone_planning") + "/meshes/quadrotor/quadrotor_base.dae"; /// tried .dae .stl. obj
+    string meshPath =  ros::package::getPath("drone_planning") + "/meshes/quadrotor/quadrotor_base.dae"; /// tried .dae .stl
 
     /// two example functions of loading mesh, not working currently, maybe because of file structure (try assimp?)
     //loadRobotMesh1(meshPath.c_str(), points, triangles);
