@@ -11,6 +11,12 @@ namespace drone_planning{
 octomap::OcTree* globalOctomapOcTree;
 fcl::OcTree<double>* globalFCLOcTree;
 
+/// drone's meshes
+std::vector<fcl::Vec3f> droneMeshPoints;
+std::vector<fcl::Triangle> droneMeshTriangles;
+
+
+
 
 Planner3D::Planner3D(ros::NodeHandle& _nodeHandle)
     : nodeHandle(_nodeHandle)
@@ -47,9 +53,98 @@ bool isStateValid(const ompl::base::State *state)
     }
     // comment lines above if you want to use octomap
 
-
     return true;
 }
+
+void loadRobotMesh(const char* filename, std::vector<fcl::Vec3f>& points, std::vector<fcl::Triangle>& triangles){
+
+
+  FILE* file = fopen(filename, "rb");
+  if(!file)
+  {
+    std::cout << "file not exist" << "\n";
+    return;
+  }
+  else{
+      std::cout << "Started reading mesh data" << "\n";
+  }
+
+  bool has_normal = false;
+  bool has_texture = false;
+  char line_buffer[2000];
+  while(fgets(line_buffer, 2000, file))
+  {
+    char* first_token = strtok(line_buffer, "\r\n\t ");
+    if(!first_token || first_token[0] == '#' || first_token[0] == 0)
+      continue;
+
+    switch(first_token[0])
+    {
+    case 'v':
+      {
+        if(first_token[1] == 'n')
+        {
+          strtok(NULL, "\t ");
+          strtok(NULL, "\t ");
+          strtok(NULL, "\t ");
+          has_normal = true;
+        }
+        else if(first_token[1] == 't')
+        {
+          strtok(NULL, "\t ");
+          strtok(NULL, "\t ");
+          has_texture = true;
+        }
+        else
+        {
+          fcl::FCL_REAL x = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
+          fcl::FCL_REAL y = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
+          fcl::FCL_REAL z = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
+          fcl::Vec3f p(x, y, z);
+          points.push_back(p);
+        }
+      }
+      break;
+    case 'f':
+      {
+        fcl::Triangle tri;
+        char* data[30];
+        int n = 0;
+        while((data[n] = strtok(NULL, "\t \r\n")) != NULL)
+        {
+          if(strlen(data[n]))
+            n++;
+        }
+
+        for(int t = 0; t < (n - 2); ++t)
+        {
+          if((!has_texture) && (!has_normal))
+          {
+            tri[0] = atoi(data[0]) - 1;
+            tri[1] = atoi(data[1]) - 1;
+            tri[2] = atoi(data[2]) - 1;
+          }
+          else
+          {
+            const char *v1;
+            for(int i = 0; i < 3; i++)
+            {
+              // vertex ID
+              if(i == 0)
+                v1 = data[0];
+              else
+                v1 = data[t + i];
+
+              tri[i] = atoi(v1) - 1;
+            }
+          }
+          triangles.push_back(tri);
+        }
+      }
+    }
+}
+}
+
 
 
 nav_msgs::Path Planner3D::extractPath(ompl::base::ProblemDefinition *pdef)
@@ -103,10 +198,15 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
     std::cout <<"Octree maxes :" << xmax <<" "<< ymax <<" " << zmax <<"\n";
     std::cout <<"Octree mins :" << xmin <<" "<< ymin <<" " << zmin <<"\n";
 
-    //TODO: Use this OcTree to check collision
+
+    //TODO: Use this OcTree below to check collision
     /// converting from octomap::OcTree to fcl::OcTree
     globalFCLOcTree = new fcl::OcTree<double>(std::shared_ptr<const octomap::OcTree>(globalOctomapOcTree));
     std::cout << globalFCLOcTree->getDefaultOccupancy() << "\n"; /// example of getting to FCL:OcTree data
+
+    //TODO: Use this meshes to check colission
+    std::cout <<"meshPoints size " <<  droneMeshPoints.size() << "\n";
+    std::cout <<"meshTriangles size " <<  droneMeshTriangles.size() << "\n";
 
     /// planned Path
     nav_msgs::Path plannedPath;
@@ -142,6 +242,14 @@ void Planner3D::configure(void)
 {
     dim = 3; ///3D Problem
     maxStepLength = 0.1; /// max step length
+
+    /// relative path to robot's mesh
+    string meshPath =  ros::package::getPath("drone_planning") + "/meshes/quadrotor/quadrotor_base.obj"; /// tried .dae .stl
+
+    /// loading drone's mesh
+    loadRobotMesh(meshPath.c_str(), droneMeshPoints, droneMeshTriangles);
+    std::cout <<"meshPoints size " <<  droneMeshPoints.size() << "\n";
+    std::cout <<"meshTriangles size " <<  droneMeshTriangles.size() << "\n";
 
     space.reset(new ompl::base::SE3StateSpace());
 
@@ -185,7 +293,6 @@ void Planner3D::configure(void)
     (*goal.get())[4]=0.0; /// qy
     (*goal.get())[5]=0.0; /// qz
     (*goal.get())[6]=1.0; /// qw
-
 
 }
 }

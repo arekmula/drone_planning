@@ -22,9 +22,9 @@
       </visual>
 
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="-1 0.5 0.3" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://hector_quadrotor_description/meshes/quadrotor/quadrotor_base.stl"/>
+          <mesh filename="package://hector_quadrotor_description/meshes/quadrotor/quadrotor_base.obj"/>
         </geometry>
       </collision>
     </link>

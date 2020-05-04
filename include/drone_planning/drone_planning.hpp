@@ -15,6 +15,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <ros/package.h>
 
 
 #include <fcl/config.h>
@@ -22,6 +23,10 @@
 #include <fcl/common/types.h>
 #include <fcl/octree.h>
 #include <fcl/data_types.h>
+#include <fcl/math/vec_3f.h>
+#include <fcl/math/math_details.h>
+#include <cmath>
+#include <limits>
 
 #include <octomap_ros/conversions.h>
 #include <grid_map_octomap/GridMapOctomapConverter.hpp>
@@ -54,6 +59,8 @@
 
 
 
+
+
 namespace drone_planning{
 
 class Planner3D
@@ -75,6 +82,8 @@ public:
      * @param octomapMsg - Octomap message of enviroment
      */
     nav_msgs::Path planPath(const octomap_msgs::Octomap& octomapMsg);
+    /// robot mesh points
+
 
 
 private:
@@ -102,6 +111,8 @@ private:
 
     /// extract path function
     nav_msgs::Path extractPath(ompl::base::ProblemDefinition* pdef);
+
+
 };
 
 }
