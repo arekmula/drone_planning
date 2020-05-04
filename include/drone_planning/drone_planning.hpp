@@ -82,6 +82,8 @@ public:
      * @param octomapMsg - Octomap message of enviroment
      */
     nav_msgs::Path planPath(const octomap_msgs::Octomap& octomapMsg);
+    /// robot mesh points
+
 
 
 private:
@@ -110,9 +112,7 @@ private:
     /// extract path function
     nav_msgs::Path extractPath(ompl::base::ProblemDefinition* pdef);
 
-    /// robot mesh, points or triangles, depends on mesh type
-    std::vector<fcl::Vec3f> meshPoints;
-    std::vector<fcl::Triangle> meshTriangles;
+
 };
 
 }
