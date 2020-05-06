@@ -12,8 +12,12 @@ octomap::OcTree* globalOctomapOcTree;
 fcl::OcTree<double>* globalFCLOcTree;
 
 /// drone's meshes
-std::vector<fcl::Vec3f> droneMeshPoints;
+std::vector<fcl::Vector3f> droneMeshVertices;
 std::vector<fcl::Triangle> droneMeshTriangles;
+
+/// BVHModel is a template class for mesh geometry, for default OBBRSS template is used
+typedef fcl::BVHModel<fcl::OBBRSSf> Model;
+std::shared_ptr<Model> geom;
 
 
 
@@ -33,31 +37,58 @@ bool isStateValid(const ompl::base::State *state)
 {
     // TODO: WHOLE FUNCTION
     /// get current coordinnates of the robot
-    const auto *coordinnates = state->as<ompl::base::CompoundState>()
-            ->as<ompl::base::RealVectorStateSpace::StateType>(0);
-    /// coordinnates->values[0] means x axis
-    /// coordinnates->values[1] means y axis
-    /// coordinnates->values[2] means z axis
+    const auto *translation = state->as<ompl::base::CompoundState>()
+            ->as<ompl::base::RealVectorStateSpace::StateType>(0); /// translation
+    const auto *quaternion = state->as<ompl::base::CompoundState>()
+            ->as<ompl::base::SO3StateSpace::StateType>(1); /// quaternion
 
-    // comment lines below if you want to use octomap
+    // comment lines below if you don't want to use example obstacle
+    // its an example obstacle
     /// define an example obstacle
-    if(coordinnates->values[0]<5.1 && coordinnates->values[0]>1.5) /// x axis
+    if(translation->values[0]<5.1 && translation->values[0]>1.5) /// x axis
     {
-        if(coordinnates->values[1]<2.5 && coordinnates->values[1]>0.4) /// y axis
+        if(translation->values[1]<2.5 && translation->values[1]>0.4) /// y axis
         {
-            if (coordinnates->values[2]<1.0 && coordinnates->values[2]>0.0) /// z axis
+            if (translation->values[2]<1.0 && translation->values[2]>0.0) /// z axis
             {
                 return false;
             }
         }
     }
-    // comment lines above if you want to use octomap
+    // comment lines above if you don't want to use example obstacle
+
+    /// R and T are the rotation matrix and translation vector
+    fcl::Matrix3f R;
+    fcl::Vector3f T;
+    /// save current translation based on state to FCL translation vector
+    T(0) = translation->values[0]; /// x
+    T(1) = translation->values[1]; /// y
+    T(2) = translation->values[2]; /// z
+    /// save current rotation in quaternion to FCL quaternion
+    fcl::Quaternionf q;
+    q.x() = quaternion->x;
+    q.y() = quaternion->y;
+    q.z() = quaternion->z;
+    q.w() = quaternion->w;
+    /// convert quaternion to rotation Matrix
+    R = q.normalized().toRotationMatrix();
+    /// Transform is configured according to R and T
+    fcl::Transform3f pose = fcl::Transform3f::Identity(); /// pose of drone
+    pose.linear()=R;
+    pose.translation()=T;
+    /// geom and pose(tf in tutorial, https://github.com/flexible-collision-library/fcl)
+    /// are the geometry and the transform of the object
+    // (?) not sure about this pose variable (?)
+    fcl::CollisionObjectf* drone = new fcl::CollisionObjectf(geom,pose); /// collision object of drone
+
+//    fcl::CollisionObjectf* octMap = new fcl::CollisionObjectd(globalFCLOcTree,pose); // instead of pose, I think it should be pose of oc
+
+
 
     return true;
 }
 
-void loadRobotMesh(const char* filename, std::vector<fcl::Vec3f>& points, std::vector<fcl::Triangle>& triangles){
-
+void loadRobotMesh(const char* filename, std::vector<fcl::Vector3f>& points, std::vector<fcl::Triangle>& triangles){
 
   FILE* file = fopen(filename, "rb");
   if(!file)
@@ -100,7 +131,7 @@ void loadRobotMesh(const char* filename, std::vector<fcl::Vec3f>& points, std::v
           fcl::FCL_REAL x = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
           fcl::FCL_REAL y = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
           fcl::FCL_REAL z = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
-          fcl::Vec3f p(x, y, z);
+          fcl::Vector3f p(x, y, z);
           points.push_back(p);
         }
       }
@@ -205,7 +236,7 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
     std::cout << globalFCLOcTree->getDefaultOccupancy() << "\n"; /// example of getting to FCL:OcTree data
 
     //TODO: Use this meshes to check colission
-    std::cout <<"meshPoints size " <<  droneMeshPoints.size() << "\n";
+    std::cout <<"meshPoints size " <<  droneMeshVertices.size() << "\n";
     std::cout <<"meshTriangles size " <<  droneMeshTriangles.size() << "\n";
 
     /// planned Path
@@ -247,9 +278,16 @@ void Planner3D::configure(void)
     string meshPath =  ros::package::getPath("drone_planning") + "/meshes/quadrotor/quadrotor_base.obj"; /// tried .dae .stl
 
     /// loading drone's mesh
-    loadRobotMesh(meshPath.c_str(), droneMeshPoints, droneMeshTriangles);
-    std::cout <<"meshPoints size " <<  droneMeshPoints.size() << "\n";
+    loadRobotMesh(meshPath.c_str(), droneMeshVertices, droneMeshTriangles);
+    std::cout <<"meshPoints size " <<  droneMeshVertices.size() << "\n";
     std::cout <<"meshTriangles size " <<  droneMeshTriangles.size() << "\n";
+
+    /// add the mesh data into the BVHModel structure
+    geom = std::make_shared<Model>();
+    geom->beginModel();
+    geom->addSubModel(droneMeshVertices, droneMeshTriangles);
+    geom->endModel();
+
 
     space.reset(new ompl::base::SE3StateSpace());
 
