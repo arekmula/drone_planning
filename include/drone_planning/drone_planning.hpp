@@ -29,11 +29,6 @@
 #include <fcl/narrowphase/collision.h>
 #include <fcl/geometry/collision_geometry.h>
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> f7aa999fde950b80d165b6f4ce4b45ed32db6bbc
 #include <cmath>
 #include <limits>
 
