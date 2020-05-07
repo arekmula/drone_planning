@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/maciej/catkin_projekt/src/drone_planning/cmake-build-debug/devel/setup.sh

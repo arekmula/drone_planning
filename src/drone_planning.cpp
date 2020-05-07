@@ -194,6 +194,8 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
     double xmax,ymax,zmax,xmin,ymin,zmin;
     globalOctomapOcTree->getMetricMax(xmax, ymax, zmax);
     globalOctomapOcTree->getMetricMin(xmin,ymin,zmin);
+
+
     std::cout <<"Octree resolution: " << globalOctomapOcTree->getResolution() << "\n";
     std::cout <<"Octree maxes :" << xmax <<" "<< ymax <<" " << zmax <<"\n";
     std::cout <<"Octree mins :" << xmin <<" "<< ymin <<" " << zmin <<"\n";
@@ -202,11 +204,12 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
     //TODO: Use this OcTree below to check collision
     /// converting from octomap::OcTree to fcl::OcTree
     globalFCLOcTree = new fcl::OcTree<double>(std::shared_ptr<const octomap::OcTree>(globalOctomapOcTree));
-    std::cout << globalFCLOcTree->getDefaultOccupancy() << "\n"; /// example of getting to FCL:OcTree data
+    std::cout << "getDefaultOccupancy(): " << globalFCLOcTree->getDefaultOccupancy() << "\n"; /// example of getting to FCL:OcTree data
 
     //TODO: Use this meshes to check colission
     std::cout <<"meshPoints size " <<  droneMeshPoints.size() << "\n";
     std::cout <<"meshTriangles size " <<  droneMeshTriangles.size() << "\n";
+
 
     /// planned Path
     nav_msgs::Path plannedPath;
@@ -238,6 +241,128 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
 
 }
 
+
+    template <typename S>
+    void octomap_collision_test(S env_scale, std::size_t env_size, bool exhaustive, std::size_t num_max_contacts, bool use_mesh, bool use_mesh_octomap, double resolution)
+    {
+        // srand(1);
+        std::vector<CollisionObject<S>*> env;
+        if(use_mesh)
+            test::generateEnvironmentsMesh(env, env_scale, env_size);
+        else
+            test::generateEnvironments(env, env_scale, env_size);
+
+        OcTree<S>* tree = new OcTree<S>(std::shared_ptr<const octomap::OcTree>(test::generateOcTree(resolution)));
+        CollisionObject<S> tree_obj((std::shared_ptr<CollisionGeometry<S>>(tree)));
+
+        DynamicAABBTreeCollisionManager<S>* manager = new DynamicAABBTreeCollisionManager<S>();
+        manager->registerObjects(env);
+        manager->setup();
+
+        DefaultCollisionData<S> cdata;
+        if(exhaustive) cdata.request.num_max_contacts = 100000;
+        else cdata.request.num_max_contacts = num_max_contacts;
+
+        test::TStruct t1;
+        test::Timer timer1;
+        timer1.start();
+        manager->octree_as_geometry_collide = false;
+        manager->octree_as_geometry_distance = false;
+        manager->collide(&tree_obj, &cdata, DefaultCollisionFunction);
+        timer1.stop();
+        t1.push_back(timer1.getElapsedTime());
+
+        DefaultCollisionData<S> cdata3;
+        if(exhaustive) cdata3.request.num_max_contacts = 100000;
+        else cdata3.request.num_max_contacts = num_max_contacts;
+
+        test::TStruct t3;
+        test::Timer timer3;
+        timer3.start();
+        manager->octree_as_geometry_collide = true;
+        manager->octree_as_geometry_distance = true;
+        manager->collide(&tree_obj, &cdata3, DefaultCollisionFunction);
+        timer3.stop();
+        t3.push_back(timer3.getElapsedTime());
+
+        test::TStruct t2;
+        test::Timer timer2;
+        timer2.start();
+        std::vector<CollisionObject<S>*> boxes;
+        if(use_mesh_octomap)
+            test::generateBoxesFromOctomapMesh(boxes, *tree);
+        else
+            test::generateBoxesFromOctomap(boxes, *tree);
+        timer2.stop();
+        t2.push_back(timer2.getElapsedTime());
+
+        timer2.start();
+        DynamicAABBTreeCollisionManager<S>* manager2 = new DynamicAABBTreeCollisionManager<S>();
+        manager2->registerObjects(boxes);
+        manager2->setup();
+        timer2.stop();
+        t2.push_back(timer2.getElapsedTime());
+
+
+        DefaultCollisionData<S> cdata2;
+        if(exhaustive) cdata2.request.num_max_contacts = 100000;
+        else cdata2.request.num_max_contacts = num_max_contacts;
+
+        timer2.start();
+        manager->collide(manager2, &cdata2, DefaultCollisionFunction);
+        timer2.stop();
+        t2.push_back(timer2.getElapsedTime());
+
+        std::cout << cdata.result.numContacts() << " " << cdata3.result.numContacts() << " " << cdata2.result.numContacts() << std::endl;
+        if(exhaustive)
+        {
+            if(use_mesh) EXPECT_TRUE((cdata.result.numContacts() > 0) >= (cdata2.result.numContacts() > 0));
+            else EXPECT_TRUE(cdata.result.numContacts() == cdata2.result.numContacts());
+        }
+        else
+        {
+            if(use_mesh) EXPECT_TRUE((cdata.result.numContacts() > 0) >= (cdata2.result.numContacts() > 0));
+            else EXPECT_TRUE((cdata.result.numContacts() > 0) >= (cdata2.result.numContacts() > 0)); // because AABB<S> return collision when two boxes contact
+        }
+
+        delete manager;
+        delete manager2;
+        for(size_t i = 0; i < boxes.size(); ++i)
+            delete boxes[i];
+
+        if(exhaustive) std::cout << "exhaustive collision" << std::endl;
+        else std::cout << "non exhaustive collision" << std::endl;
+        std::cout << "1) octomap overall time: " << t1.overall_time << std::endl;
+        std::cout << "1') octomap overall time (as geometry): " << t3.overall_time << std::endl;
+        std::cout << "2) boxes overall time: " << t2.overall_time << std::endl;
+        std::cout << "  a) to boxes: " << t2.records[0] << std::endl;
+        std::cout << "  b) structure init: " << t2.records[1] << std::endl;
+        std::cout << "  c) collision: " << t2.records[2] << std::endl;
+        std::cout << "Note: octomap may need more collides when using mesh, because octomap collision uses box primitive inside" << std::endl;
+    }
+
+
+    template <typename S>
+    void test_octomap_collision_mesh()
+    {
+#ifdef NDEBUG
+        octomap_collision_test<S>(200, 100, false, 10, true, true);
+  octomap_collision_test<S>(200, 1000, false, 10, true, true);
+  octomap_collision_test<S>(200, 100, true, 1, true, true);
+  octomap_collision_test<S>(200, 1000, true, 1, true, true);
+#else
+        octomap_collision_test<S>(200, 4, false, 1, true, true, 1.0);
+        octomap_collision_test<S>(200, 4, true, 1, true, true, 1.0);
+#endif
+    }
+
+    GTEST_TEST(FCL_OCTOMAP, test_octomap_collision_mesh)
+{
+//  test_octomap_collision_mesh<float>();
+    test_octomap_collision_mesh<double>();
+}
+
+
 void Planner3D::configure(void)
 {
     dim = 3; ///3D Problem
@@ -249,6 +374,7 @@ void Planner3D::configure(void)
     /// loading drone's mesh
     loadRobotMesh(meshPath.c_str(), droneMeshPoints, droneMeshTriangles);
     std::cout <<"meshPoints size " <<  droneMeshPoints.size() << "\n";
+    //droneMeshPoints.
     std::cout <<"meshTriangles size " <<  droneMeshTriangles.size() << "\n";
 
     space.reset(new ompl::base::SE3StateSpace());

@@ -25,6 +25,10 @@
 #include <fcl/data_types.h>
 #include <fcl/math/vec_3f.h>
 #include <fcl/math/math_details.h>
+
+#include <fcl/narrowphase/collision.h>
+#include <fcl/geometry/collision_geometry.h>
+
 #include <cmath>
 #include <limits>
 
@@ -56,6 +60,7 @@
 #include <thread>
 #include <fstream>
 #include <iomanip>
+#include <string>
 
 
 
