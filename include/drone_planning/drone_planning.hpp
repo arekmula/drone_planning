@@ -29,6 +29,11 @@
 #include <fcl/narrowphase/collision.h>
 #include <fcl/geometry/collision_geometry.h>
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> f7aa999fde950b80d165b6f4ce4b45ed32db6bbc
 #include <cmath>
 #include <limits>
 
@@ -47,6 +52,9 @@
 // Eigen
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
+#include <eigen3/Eigen/Eigen>
+#include <eigen3/Eigen/Dense>
+
 
 // Octomap conversions
 #include <drone_planning/conversions.h>
