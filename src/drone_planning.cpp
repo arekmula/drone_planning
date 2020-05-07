@@ -10,6 +10,7 @@ namespace drone_planning{
 
 octomap::OcTree* globalOctomapOcTree;
 fcl::OcTree<double>* globalFCLOcTree;
+std::shared_ptr<fcl::CollisionGeometry<double>> globalCollisionGeometryOcTree;
 
 /// drone's meshes
 std::vector<fcl::Vector3f> droneMeshVertices;
@@ -57,14 +58,14 @@ bool isStateValid(const ompl::base::State *state)
     }
     // comment lines above if you don't want to use example obstacle
 
-    /// R and T are the rotation matrix and translation vector
+    /// R and T are the rotation matrix and translation vector of drone
     fcl::Matrix3f R;
     fcl::Vector3f T;
-    /// save current translation based on state to FCL translation vector
+    /// save current drone translation based on state to FCL translation vector
     T(0) = translation->values[0]; /// x
     T(1) = translation->values[1]; /// y
     T(2) = translation->values[2]; /// z
-    /// save current rotation in quaternion to FCL quaternion
+    /// save current drone rotation in quaternion to FCL quaternion
     fcl::Quaternionf q;
     q.x() = quaternion->x;
     q.y() = quaternion->y;
@@ -81,7 +82,7 @@ bool isStateValid(const ompl::base::State *state)
     // (?) not sure about this pose variable (?)
     fcl::CollisionObjectf* drone = new fcl::CollisionObjectf(geom,pose); /// collision object of drone
 
-//    fcl::CollisionObjectf* octMap = new fcl::CollisionObjectd(globalFCLOcTree,pose); // instead of pose, I think it should be pose of oc
+
 
 
 
@@ -235,7 +236,32 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
     globalFCLOcTree = new fcl::OcTree<double>(std::shared_ptr<const octomap::OcTree>(globalOctomapOcTree));
     std::cout << globalFCLOcTree->getDefaultOccupancy() << "\n"; /// example of getting to FCL:OcTree data
 
-    //TODO: Use this meshes to check colission
+    /// create CollisionGeomeetry from OcTree
+    globalCollisionGeometryOcTree = std::shared_ptr<fcl::CollisionGeometry<double>>(globalFCLOcTree);
+
+    fcl::Matrix3f Roctomap; /// rotation matrix of octomap
+    fcl::Vector3f Toctomap; /// translation vector of octomap
+    /// get translation of octomap
+    Toctomap(0)=globalOctomapOcTree->getBBXCenter().x();
+    Toctomap(1)=globalOctomapOcTree->getBBXCenter().y();
+    Toctomap(2)=globalOctomapOcTree->getBBXCenter().z();
+    /// get rotation of octomap as euler
+    fcl::AngleAxisf rollAngle(globalOctomapOcTree->getBBXCenter().roll(),fcl::Vector3f::UnitZ());
+    fcl::AngleAxisf pitchAngle(globalOctomapOcTree->getBBXCenter().pitch(),fcl::Vector3f::UnitX());
+    fcl::AngleAxisf yawAngle(globalOctomapOcTree->getBBXCenter().yaw(),fcl::Vector3f::UnitY());
+    /// convert it to quaternion
+    fcl::Quaternion<float> q = rollAngle*pitchAngle*yawAngle;
+    /// convert it to rotation matrix
+    Roctomap = q.matrix();
+    /// get transform of octomap
+    fcl::Transform3f pose = fcl::Transform3f::Identity();
+    pose.linear()=Roctomap;
+    pose.translation()=Toctomap;
+
+    // can't convert it to collisionObject
+//    fcl::CollisionObjectf* obj = new fcl::CollisionObjectf(globalCollisionGeometryOcTree, pose);
+
+
     std::cout <<"meshPoints size " <<  droneMeshVertices.size() << "\n";
     std::cout <<"meshTriangles size " <<  droneMeshTriangles.size() << "\n";
 
