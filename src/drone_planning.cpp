@@ -254,12 +254,15 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
     /// convert it to rotation matrix
     Roctomap = q.matrix();
     /// get transform of octomap
-    fcl::Transform3f pose = fcl::Transform3f::Identity();
-    pose.linear()=Roctomap;
-    pose.translation()=Toctomap;
+    fcl::Transform3f poseOctomap = fcl::Transform3f::Identity();
+    poseOctomap.linear()=Roctomap;
+    poseOctomap.translation()=Toctomap;
 
-    // can't convert it to collisionObject
-//    fcl::CollisionObjectf* obj = new fcl::CollisionObjectf(globalCollisionGeometryOcTree, pose);
+    // this version below works
+    fcl::CollisionObjectd* obj = new fcl::CollisionObjectd(globalCollisionGeometryOcTree);
+    // this version below should work, but it doesn't
+//    fcl::CollisionObjectd* obj = new fcl::CollisionObjectd(globalCollisionGeometryOcTree, poseOctomap);
+
 
 
     std::cout <<"meshPoints size " <<  droneMeshVertices.size() << "\n";
