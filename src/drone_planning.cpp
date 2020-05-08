@@ -8,9 +8,11 @@ using namespace ros;
 
 namespace drone_planning{
 
+/// variables needed to convert delivered octomap to collision object of this octomap
 octomap::OcTree* globalOctomapOcTree;
-fcl::OcTree<double>* globalFCLOcTree;
-std::shared_ptr<fcl::CollisionGeometry<double>> globalCollisionGeometryOcTree;
+fcl::OcTree<float>* globalFCLOcTree;
+std::shared_ptr<fcl::CollisionGeometry<float>> globalCollisionGeometryOcTree; /// collision geometry of octoamp
+fcl::CollisionObjectf* globalCollisionObjectOcTree; /// collision object of octomap
 
 /// drone's meshes
 std::vector<fcl::Vector3f> droneMeshVertices;
@@ -36,27 +38,11 @@ Planner3D::~Planner3D()
 
 bool isStateValid(const ompl::base::State *state)
 {
-    // TODO: WHOLE FUNCTION
     /// get current coordinnates of the robot
     const auto *translation = state->as<ompl::base::CompoundState>()
             ->as<ompl::base::RealVectorStateSpace::StateType>(0); /// translation
     const auto *quaternion = state->as<ompl::base::CompoundState>()
             ->as<ompl::base::SO3StateSpace::StateType>(1); /// quaternion
-
-    // comment lines below if you don't want to use example obstacle
-    // its an example obstacle
-    /// define an example obstacle
-    if(translation->values[0]<5.1 && translation->values[0]>1.5) /// x axis
-    {
-        if(translation->values[1]<2.5 && translation->values[1]>0.4) /// y axis
-        {
-            if (translation->values[2]<1.0 && translation->values[2]>0.0) /// z axis
-            {
-                return false;
-            }
-        }
-    }
-    // comment lines above if you don't want to use example obstacle
 
     /// R and T are the rotation matrix and translation vector of drone
     fcl::Matrix3f R;
@@ -81,11 +67,14 @@ bool isStateValid(const ompl::base::State *state)
     /// are the geometry and the transform of the object
     // (?) not sure about this pose variable (?)
     fcl::CollisionObjectf* drone = new fcl::CollisionObjectf(geom,pose); /// collision object of drone
-
-
-
-
-
+    /// create request and result variables
+    fcl::CollisionRequest<float> request;
+    fcl::CollisionResult<float> result;
+    /// check if there is collision between drone and enviroment
+    int collides = fcl::collide(drone, globalCollisionObjectOcTree, request, result);
+    /// if there's any collision return state as invalid
+    if (collides>0)
+        return false;
     return true;
 }
 
@@ -218,26 +207,15 @@ nav_msgs::Path Planner3D::extractPath(ompl::base::ProblemDefinition *pdef)
 
 nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
 {
-
-    octomap::AbstractOcTree* my_tree = octomap_msgs::fullMsgToMap(octomapMsg); /// octomap message to AbstractOcTree
-    globalOctomapOcTree = dynamic_cast<octomap::OcTree*>(my_tree); /// casting AbstractOcTree to OcTree
-
-    /// examples of getting to octomap::OcTree data
-    double xmax,ymax,zmax,xmin,ymin,zmin;
-    globalOctomapOcTree->getMetricMax(xmax, ymax, zmax);
-    globalOctomapOcTree->getMetricMin(xmin,ymin,zmin);
-    std::cout <<"Octree resolution: " << globalOctomapOcTree->getResolution() << "\n";
-    std::cout <<"Octree maxes :" << xmax <<" "<< ymax <<" " << zmax <<"\n";
-    std::cout <<"Octree mins :" << xmin <<" "<< ymin <<" " << zmin <<"\n";
-
-
-    //TODO: Use this OcTree below to check collision
+    /// converting octomap message to AbstractOcTree
+    octomap::AbstractOcTree* my_tree = octomap_msgs::fullMsgToMap(octomapMsg);
+    /// casting AbstractOcTree to OcTree
+    globalOctomapOcTree = dynamic_cast<octomap::OcTree*>(my_tree);
     /// converting from octomap::OcTree to fcl::OcTree
-    globalFCLOcTree = new fcl::OcTree<double>(std::shared_ptr<const octomap::OcTree>(globalOctomapOcTree));
+    globalFCLOcTree = new fcl::OcTree<float>(std::shared_ptr<const octomap::OcTree>(globalOctomapOcTree));
     std::cout << globalFCLOcTree->getDefaultOccupancy() << "\n"; /// example of getting to FCL:OcTree data
-
     /// create CollisionGeomeetry from OcTree
-    globalCollisionGeometryOcTree = std::shared_ptr<fcl::CollisionGeometry<double>>(globalFCLOcTree);
+    globalCollisionGeometryOcTree = std::shared_ptr<fcl::CollisionGeometry<float>>(globalFCLOcTree);
 
     fcl::Matrix3f Roctomap; /// rotation matrix of octomap
     fcl::Vector3f Toctomap; /// translation vector of octomap
@@ -257,23 +235,14 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
     fcl::Transform3f poseOctomap = fcl::Transform3f::Identity();
     poseOctomap.linear()=Roctomap;
     poseOctomap.translation()=Toctomap;
-
-    // this version below works
-    fcl::CollisionObjectd* obj = new fcl::CollisionObjectd(globalCollisionGeometryOcTree);
-    // this version below should work, but it doesn't
-//    fcl::CollisionObjectd* obj = new fcl::CollisionObjectd(globalCollisionGeometryOcTree, poseOctomap);
-
-
-
-    std::cout <<"meshPoints size " <<  droneMeshVertices.size() << "\n";
-    std::cout <<"meshTriangles size " <<  droneMeshTriangles.size() << "\n";
+    /// create collision object of octomap
+    /// it is used in isStateValid to check collision with drone
+    globalCollisionObjectOcTree = new fcl::CollisionObjectf(globalCollisionGeometryOcTree, poseOctomap);
 
     /// planned Path
     nav_msgs::Path plannedPath;
     /// creating space information for the state space
     auto si(std::make_shared<ompl::base::SpaceInformation>(space));
-
-    //TODO: create isStateValid function that's using octomap
     ///Set the state validity checker
     si->setStateValidityChecker(isStateValid);
     /// create problem definition
@@ -343,9 +312,9 @@ void Planner3D::configure(void)
     /// define starting state
     start.reset(new ompl::base::ScopedState<>(space));
 
-    (*start.get())[0]=0.0; /// x
-    (*start.get())[1]=0.0; /// y
-    (*start.get())[2]=0.1; /// z
+    (*start.get())[0]=-1.0; /// x
+    (*start.get())[1]=0.5; /// y
+    (*start.get())[2]=0.3; /// z
     (*start.get())[3]=0.0; /// qx
     (*start.get())[4]=0.0; /// qy
     (*start.get())[5]=0.0; /// qz
@@ -355,7 +324,7 @@ void Planner3D::configure(void)
     goal.reset(new ompl::base::ScopedState<>(space));
     (*goal.get())[0]=5.3; /// x
     (*goal.get())[1]=2.6; /// y
-    (*goal.get())[2]=1.5; /// z
+    (*goal.get())[2]=2.0; /// z
     (*goal.get())[3]=0.0; /// qx
     (*goal.get())[4]=0.0; /// qy
     (*goal.get())[5]=0.0; /// qz

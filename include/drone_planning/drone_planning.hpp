@@ -28,6 +28,41 @@
 
 #include <fcl/narrowphase/collision.h>
 #include <fcl/geometry/collision_geometry.h>
+#include <fcl/narrowphase/collision_request.h>
+#include <fcl/narrowphase/collision_result.h>
+#include <fcl/collision_func_matrix.h>
+#include <fcl/narrowphase/collision_object.h>
+#include <fcl/collision.h>
+#include <ccd/ccd.h>
+#include <ccd/quat.h>
+
+#include <fcl/common/unused.h>
+#include "fcl/math/constants.h"
+#include "fcl/math/triangle.h"
+
+#include "fcl/geometry/shape/box.h"
+#include "fcl/geometry/shape/sphere.h"
+#include "fcl/geometry/shape/cylinder.h"
+#include "fcl/geometry/bvh/BVH_model.h"
+#include "fcl/geometry/octree/octree.h"
+
+#include "fcl/narrowphase/distance.h"
+#include "fcl/narrowphase/continuous_collision_object.h"
+#include "fcl/narrowphase/continuous_collision_request.h"
+#include "fcl/narrowphase/continuous_collision_result.h"
+
+#include "fcl/narrowphase/collision.h"
+#include "fcl/broadphase/broadphase_bruteforce.h"
+#include "fcl/broadphase/broadphase_spatialhash.h"
+#include "fcl/broadphase/broadphase_SaP.h"
+#include "fcl/broadphase/broadphase_SSaP.h"
+#include "fcl/broadphase/broadphase_interval_tree.h"
+#include "fcl/broadphase/broadphase_dynamic_AABB_tree.h"
+#include "fcl/broadphase/broadphase_dynamic_AABB_tree_array.h"
+#include "fcl/broadphase/default_broadphase_callbacks.h"
+#include "fcl/geometry/geometric_shape_to_BVH_model.h"
+
+
 
 
 
@@ -65,6 +100,7 @@
 #include <thread>
 #include <fstream>
 #include <iomanip>
+#include <array>
 
 
 
