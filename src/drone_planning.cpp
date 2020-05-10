@@ -7,9 +7,17 @@ using namespace ros;
 
 namespace drone_planning{
 
+<<<<<<< HEAD
     octomap::OcTree* globalOctomapOcTree;
     fcl::OcTree<double>* globalFCLOcTree;
     std::shared_ptr<fcl::CollisionGeometry<double>> globalCollisionGeometryOcTree;
+=======
+/// variables needed to convert delivered octomap to collision object of this octomap
+octomap::OcTree* globalOctomapOcTree;
+fcl::OcTree<float>* globalFCLOcTree;
+std::shared_ptr<fcl::CollisionGeometry<float>> globalCollisionGeometryOcTree; /// collision geometry of octoamp
+fcl::CollisionObjectf* globalCollisionObjectOcTree; /// collision object of octomap
+>>>>>>> upstream/master
 
 /// drone's meshes
     std::vector<fcl::Vector3f> droneMeshVertices;
@@ -29,6 +37,7 @@ namespace drone_planning{
         configure();
     }
 
+<<<<<<< HEAD
     Planner3D::~Planner3D()
     {
     }
@@ -93,6 +102,89 @@ namespace drone_planning{
 
         FILE* file = fopen(filename, "rb");
         if(!file)
+=======
+bool isStateValid(const ompl::base::State *state)
+{
+    /// get current coordinnates of the robot
+    const auto *translation = state->as<ompl::base::CompoundState>()
+            ->as<ompl::base::RealVectorStateSpace::StateType>(0); /// translation
+    const auto *quaternion = state->as<ompl::base::CompoundState>()
+            ->as<ompl::base::SO3StateSpace::StateType>(1); /// quaternion
+
+    /// R and T are the rotation matrix and translation vector of drone
+    fcl::Matrix3f R;
+    fcl::Vector3f T;
+    /// save current drone translation based on state to FCL translation vector
+    T(0) = translation->values[0]; /// x
+    T(1) = translation->values[1]; /// y
+    T(2) = translation->values[2]; /// z
+    /// save current drone rotation in quaternion to FCL quaternion
+    fcl::Quaternionf q;
+    q.x() = quaternion->x;
+    q.y() = quaternion->y;
+    q.z() = quaternion->z;
+    q.w() = quaternion->w;
+    /// convert quaternion to rotation Matrix
+    R = q.normalized().toRotationMatrix();
+    /// Transform is configured according to R and T
+    fcl::Transform3f pose = fcl::Transform3f::Identity(); /// pose of drone
+    pose.linear()=R;
+    pose.translation()=T;
+    /// geom and pose(tf in tutorial, https://github.com/flexible-collision-library/fcl)
+    /// are the geometry and the transform of the object
+    // (?) not sure about this pose variable (?)
+    fcl::CollisionObjectf* drone = new fcl::CollisionObjectf(geom,pose); /// collision object of drone
+    /// create request and result variables
+    fcl::CollisionRequest<float> request;
+    fcl::CollisionResult<float> result;
+    /// check if there is collision between drone and enviroment
+    int collides = fcl::collide(drone, globalCollisionObjectOcTree, request, result);
+    /// if there's any collision return state as invalid
+    if (collides>0)
+        return false;
+    return true;
+}
+
+void loadRobotMesh(const char* filename, std::vector<fcl::Vector3f>& points, std::vector<fcl::Triangle>& triangles){
+
+  FILE* file = fopen(filename, "rb");
+  if(!file)
+  {
+    std::cout << "file not exist" << "\n";
+    return;
+  }
+  else{
+      std::cout << "Started reading mesh data" << "\n";
+  }
+
+  bool has_normal = false;
+  bool has_texture = false;
+  char line_buffer[2000];
+  while(fgets(line_buffer, 2000, file))
+  {
+    char* first_token = strtok(line_buffer, "\r\n\t ");
+    if(!first_token || first_token[0] == '#' || first_token[0] == 0)
+      continue;
+
+    switch(first_token[0])
+    {
+    case 'v':
+      {
+        if(first_token[1] == 'n')
+        {
+          strtok(NULL, "\t ");
+          strtok(NULL, "\t ");
+          strtok(NULL, "\t ");
+          has_normal = true;
+        }
+        else if(first_token[1] == 't')
+        {
+          strtok(NULL, "\t ");
+          strtok(NULL, "\t ");
+          has_texture = true;
+        }
+        else
+>>>>>>> upstream/master
         {
             std::cout << "file not exist" << "\n";
             return;
@@ -215,8 +307,68 @@ namespace drone_planning{
         }
         return plannedPath;
     }
+<<<<<<< HEAD
 
     nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
+=======
+    return plannedPath;
+}
+
+nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
+{
+    /// converting octomap message to AbstractOcTree
+    octomap::AbstractOcTree* my_tree = octomap_msgs::fullMsgToMap(octomapMsg);
+    /// casting AbstractOcTree to OcTree
+    globalOctomapOcTree = dynamic_cast<octomap::OcTree*>(my_tree);
+    /// converting from octomap::OcTree to fcl::OcTree
+    globalFCLOcTree = new fcl::OcTree<float>(std::shared_ptr<const octomap::OcTree>(globalOctomapOcTree));
+    std::cout << globalFCLOcTree->getDefaultOccupancy() << "\n"; /// example of getting to FCL:OcTree data
+    /// create CollisionGeomeetry from OcTree
+    globalCollisionGeometryOcTree = std::shared_ptr<fcl::CollisionGeometry<float>>(globalFCLOcTree);
+
+    fcl::Matrix3f Roctomap; /// rotation matrix of octomap
+    fcl::Vector3f Toctomap; /// translation vector of octomap
+    /// get translation of octomap
+    Toctomap(0)=globalOctomapOcTree->getBBXCenter().x();
+    Toctomap(1)=globalOctomapOcTree->getBBXCenter().y();
+    Toctomap(2)=globalOctomapOcTree->getBBXCenter().z();
+    /// get rotation of octomap as euler
+    fcl::AngleAxisf rollAngle(globalOctomapOcTree->getBBXCenter().roll(),fcl::Vector3f::UnitZ());
+    fcl::AngleAxisf pitchAngle(globalOctomapOcTree->getBBXCenter().pitch(),fcl::Vector3f::UnitX());
+    fcl::AngleAxisf yawAngle(globalOctomapOcTree->getBBXCenter().yaw(),fcl::Vector3f::UnitY());
+    /// convert it to quaternion
+    fcl::Quaternion<float> q = rollAngle*pitchAngle*yawAngle;
+    /// convert it to rotation matrix
+    Roctomap = q.matrix();
+    /// get transform of octomap
+    fcl::Transform3f poseOctomap = fcl::Transform3f::Identity();
+    poseOctomap.linear()=Roctomap;
+    poseOctomap.translation()=Toctomap;
+    /// create collision object of octomap
+    /// it is used in isStateValid to check collision with drone
+    globalCollisionObjectOcTree = new fcl::CollisionObjectf(globalCollisionGeometryOcTree, poseOctomap);
+
+    /// planned Path
+    nav_msgs::Path plannedPath;
+    /// creating space information for the state space
+    auto si(std::make_shared<ompl::base::SpaceInformation>(space));
+    ///Set the state validity checker
+    si->setStateValidityChecker(isStateValid);
+    /// create problem definition
+    auto pdef(std::make_shared<ompl::base::ProblemDefinition>(si));
+    /// set the start and goal states for the problem definiton
+    pdef->setStartAndGoalStates(*start.get(),*goal.get());
+    /// create instance of planner
+    auto planner(std::make_shared<ompl::geometric::LazyPRMstar>(si));
+    /// tell planner which problem we are intrested in solving
+    planner->setProblemDefinition(pdef);
+    /// setup the planner, after all settings for the space and planner are done
+    planner->setup();
+    /// problem status
+    ompl::base::PlannerStatus solved = planner->ompl::base::Planner::solve(1.0);
+    /// check if problem is solved
+    if (solved)
+>>>>>>> upstream/master
     {
 
         octomap::AbstractOcTree* my_tree = octomap_msgs::fullMsgToMap(octomapMsg); /// octomap message to AbstractOcTree
@@ -340,6 +492,7 @@ namespace drone_planning{
         /// define starting state
         start.reset(new ompl::base::ScopedState<>(space));
 
+<<<<<<< HEAD
         (*start.get())[0]=0.0; /// x
         (*start.get())[1]=0.0; /// y
         (*start.get())[2]=0.1; /// z
@@ -357,6 +510,25 @@ namespace drone_planning{
         (*goal.get())[4]=0.0; /// qy
         (*goal.get())[5]=0.0; /// qz
         (*goal.get())[6]=1.0; /// qw
+=======
+    (*start.get())[0]=-1.0; /// x
+    (*start.get())[1]=0.5; /// y
+    (*start.get())[2]=0.3; /// z
+    (*start.get())[3]=0.0; /// qx
+    (*start.get())[4]=0.0; /// qy
+    (*start.get())[5]=0.0; /// qz
+    (*start.get())[6]=1.0; /// qw
+
+    /// define goal state
+    goal.reset(new ompl::base::ScopedState<>(space));
+    (*goal.get())[0]=5.3; /// x
+    (*goal.get())[1]=2.6; /// y
+    (*goal.get())[2]=2.0; /// z
+    (*goal.get())[3]=0.0; /// qx
+    (*goal.get())[4]=0.0; /// qy
+    (*goal.get())[5]=0.0; /// qz
+    (*goal.get())[6]=1.0; /// qw
+>>>>>>> upstream/master
 
     }
 }
