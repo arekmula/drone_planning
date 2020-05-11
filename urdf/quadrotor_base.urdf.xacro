@@ -17,14 +17,14 @@
       <visual>
         <origin xyz="-1 0.5 0.3" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://hector_quadrotor_description/meshes/quadrotor/quadrotor_base.dae"/>
+          <mesh filename="package://drone_planning/meshes/quadrotor/quadrotor_2.dae"/>
         </geometry>
       </visual>
 
       <collision>
         <origin xyz="-1 0.5 0.3" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://hector_quadrotor_description/meshes/quadrotor/quadrotor_base.obj"/>
+          <mesh filename="package://drone_planning/meshes/quadrotor/quadrotor_2.obj"/>
         </geometry>
       </collision>
     </link>

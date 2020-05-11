@@ -1,4 +1,3 @@
-
 #include "../include/drone_planning/drone_planning.hpp"
 
 using namespace std;

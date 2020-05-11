@@ -64,8 +64,6 @@
 
 
 
-
-
 #include <cmath>
 #include <limits>
 
@@ -100,7 +98,11 @@
 #include <thread>
 #include <fstream>
 #include <iomanip>
+<<<<<<< HEAD
+#include <string>
+=======
 #include <array>
+>>>>>>> upstream/master
 
 
 
