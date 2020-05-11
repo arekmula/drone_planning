@@ -1,8 +1,0 @@
-prefix=/home/maciej/catkin_projekt/src/drone_planning/cmake-build-debug/devel
-
-Name: drone_planning
-Description: Description of drone_planning
-Version: 0.0.0
-Cflags: -I/home/maciej/catkin_projekt/src/drone_planning/include
-Libs: -L${prefix}/lib -ldrone_planning_library
-Requires: roscpp rospy std_msgs sensor_msgs octomap_msgs octomap_ros roslib

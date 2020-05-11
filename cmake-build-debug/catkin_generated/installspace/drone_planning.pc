@@ -1,8 +1,0 @@
-prefix=/usr/local
-
-Name: drone_planning
-Description: Description of drone_planning
-Version: 0.0.0
-Cflags: -I${prefix}/include
-Libs: -L${prefix}/lib -ldrone_planning_library
-Requires: roscpp rospy std_msgs sensor_msgs octomap_msgs octomap_ros roslib

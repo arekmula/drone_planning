@@ -1,2 +1,0 @@
-/usr/bin/ar qc devel/lib/libdrone_planning_library.a  CMakeFiles/drone_planning_library.dir/src/drone_planning.cpp.o
-/usr/bin/ranlib devel/lib/libdrone_planning_library.a
