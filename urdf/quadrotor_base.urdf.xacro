@@ -2,11 +2,13 @@
 
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <!--<xacro:include filename="$(find hector_sensors_description)/urdf/sonar_sensor.urdf.xacro" />-->
-  <xacro:property name="pi" value="3.1415926535897931" />
+<!--<xacro:property name="Xpos" value="1"/>-->
+<xacro:property name="Ypos" value="0.5"/>
+<xacro:property name="Zpos" value="0.3"/>
 
   <!-- Main quadrotor link -->
   <xacro:macro name="quadrotor_base_macro">
+
     <link name="odom">
       <inertial>
         <mass value="1.477" />
@@ -15,24 +17,19 @@
       </inertial>
 
       <visual>
-        <origin xyz="-1 0.5 0.3" rpy="0 0 0" />
+        <origin xyz="${Xpos} ${Ypos} ${Zpos}" rpy="0 0 0" />
         <geometry>
           <mesh filename="package://drone_planning/meshes/quadrotor/quadrotor_2.dae"/>
         </geometry>
       </visual>
 
       <collision>
-        <origin xyz="-1 0.5 0.3" rpy="0 0 0" />
+        <origin xyz="${Xpos} ${Ypos} ${Zpos}" rpy="0 0 0" />
         <geometry>
           <mesh filename="package://drone_planning/meshes/quadrotor/quadrotor_2.obj"/>
         </geometry>
       </collision>
+
     </link>
-
-    <!-- Sonar height sensor -->
-    <!--<xacro:sonar_sensor name="sonar" parent="base_link" ros_topic="sonar_height" update_rate="10" min_range="0.03" max_range="3.0" field_of_view="${40*pi/180}" ray_count="3">
-      <origin xyz="-0.16 0.0 -0.012" rpy="0 ${90*pi/180} 0"/>
-    </xacro:sonar_sensor>-->
-
   </xacro:macro>
 </robot>
