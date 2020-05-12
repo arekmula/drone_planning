@@ -177,8 +177,8 @@ target_link_libraries(${PROJECT_NAME}_node
    ${PROJECT_NAME}_library
   ${catkin_LIBRARIES}
   # if it's not working uncomment line under this one and comment next one
-  #ompl
- ${OMPL_LIBRARIES}
+  ompl
+ #${OMPL_LIBRARIES}
   fcl
   ccd
 )
