@@ -75,6 +75,7 @@ bool isStateValid(const ompl::base::State *state)
     if (collides>0)
         return false;
     return true;
+
 }
 
 void loadRobotMesh(const char* filename, std::vector<fcl::Vector3f>& points, std::vector<fcl::Triangle>& triangles){

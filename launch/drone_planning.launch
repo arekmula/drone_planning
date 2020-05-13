@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <arg name="rvizconfig" default="$(find drone_planning)/rviz/drone_planning.rviz" /> 
-	
-    <node pkg="rviz" name="rviz" type="rviz" output="screen" args="-d $(arg rvizconfig)"/> 
-
     <node pkg="drone_planning" type="drone_planning_node" name="drone_planning_node" output="screen"/>
+    
+    <arg name="rvizconfig" default="$(find drone_planning)/rviz/drone_planning.rviz" /> 
+    <node pkg="rviz" name="rviz" type="rviz" output="screen" args="-d $(arg rvizconfig)"/> 
+	<param name="robot_description" command="$(find xacro)/xacro.py $(find drone_planning)/urdf/quadrotor.urdf.xacro"/>
+        <param name="use_gui" value="True"/>
 
-	<param name="robot_description" command="$(find xacro)/xacro.py $(find drone_planning)/urdf/quadrotor.urdf.xacro" />
-	<param name="use_gui" value="True"/>
-	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" ></node>
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+   <!-- <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" ></node>-->
+   <!--  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />-->
     
 </launch>
