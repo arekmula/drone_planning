@@ -79,6 +79,11 @@ int main(int argc, char **argv)
   ros::NodeHandle node("~");
   drone_planning::Planner3D planner_(node);
 
+  ros::init(argc, argv, "robot_tf_publisher");
+  ros::NodeHandle n;
+  ros::Rate r(100);
+  tf::TransformBroadcaster broadcaster;
+
   /// setup ROS lopp rate
   ros::Rate loop_rate(1);
 
@@ -99,6 +104,20 @@ int main(int argc, char **argv)
       if(globalOctoMap.data.size()>0) /// make sure that node has subsribed to octomap data
       {
           plannedPath = planner_.planPath(globalOctoMap);
+          // std::cout<<plannedPath<<"\n";
+          // std::cout<<"Sciezka \n";
+          for (int i = 0 ; i < plannedPath.poses.size() ; i++)
+          {
+              //  std::cout<<" X : "<<plannedPath.poses[i].pose.position.x
+              //   <<" Y : "<<plannedPath.poses[i].pose.position.y
+              //  <<" Z : "<<plannedPath.poses[i].pose.position.z<<" \n";
+              broadcaster.sendTransform(
+                      tf::StampedTransform(
+                              tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(plannedPath.poses[i].pose.position.x, plannedPath.poses[i].pose.position.y, plannedPath.poses[i].pose.position.z)),
+                              ros::Time::now(), "odom","tf"));
+              ros::Duration(1.0).sleep();
+
+          }
       }
 
       /// publishing path
