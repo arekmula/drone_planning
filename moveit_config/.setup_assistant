@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: drone_planning
+    relative_path: urdf/quadrotor.urdf.xacro
+    xacro_args: ""
+  SRDF:
+    relative_path: config/quadrotor.srdf
+  CONFIG:
+    author_name: Maciej
+    author_email: maciej.skwara@gazeta.pl
+    generated_timestamp: 1589908778
