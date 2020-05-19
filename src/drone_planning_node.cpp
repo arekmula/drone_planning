@@ -106,22 +106,35 @@ int main(int argc, char **argv)
           plannedPath = planner_.planPath(globalOctoMap);
           // std::cout<<plannedPath<<"\n";
           // std::cout<<"Sciezka \n";
-          for (int i = 0 ; i < plannedPath.poses.size() ; i++)
-          {
-              //  std::cout<<" X : "<<plannedPath.poses[i].pose.position.x
-              //   <<" Y : "<<plannedPath.poses[i].pose.position.y
-              //  <<" Z : "<<plannedPath.poses[i].pose.position.z<<" \n";
-              broadcaster.sendTransform(
-                      tf::StampedTransform(
-                              tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(plannedPath.poses[i].pose.position.x, plannedPath.poses[i].pose.position.y, plannedPath.poses[i].pose.position.z)),
-                              ros::Time::now(), "odom","tf"));
-              ros::Duration(1.0).sleep();
 
-          }
       }
 
       /// publishing path
       path_pub.publish(plannedPath);
+
+      /// TFs
+      for (int i = 0 ; i < plannedPath.poses.size() ; i++)
+      {
+          //  std::cout<<" X : "<<plannedPath.poses[i].pose.position.x
+          //   <<" Y : "<<plannedPath.poses[i].pose.position.y
+          //  <<" Z : "<<plannedPath.poses[i].pose.position.z<<" \n";
+          broadcaster.sendTransform(
+                  tf::StampedTransform(
+                          tf::Transform(tf::Quaternion(0, 0, 0, 1),
+                                  tf::Vector3(-1, 0.5, 0.3)),
+                          ros::Time::now(), "odom","drone"));
+
+          broadcaster.sendTransform(
+                  tf::StampedTransform(
+                          tf::Transform(tf::Quaternion(0, 0, 0, 1),
+                                  tf::Vector3(plannedPath.poses[i].pose.position.x + 1,
+                                          plannedPath.poses[i].pose.position.y - 0.5,
+                                          plannedPath.poses[i].pose.position.z - 0.3)),
+                          ros::Time::now(), "drone","tf"));
+          
+          ros::Duration(1.0).sleep();
+      }
+
 
       ros::spinOnce();
       loop_rate.sleep();

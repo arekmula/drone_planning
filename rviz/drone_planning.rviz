@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /TF1
+        - /TF1/Frames1
       Splitter Ratio: 0.5
     Tree Height: 728
   - Class: rviz/Selection
@@ -139,14 +139,23 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
-        All Enabled: true
+        All Enabled: false
+        drone:
+          Value: true
+        odom:
+          Value: false
+        tf:
+          Value: true
       Marker Scale: 3
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        odom:
+          drone:
+            tf:
+              {}
       Update Interval: 0
       Value: true
   Enabled: true
@@ -192,10 +201,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8703981637954712
+      Pitch: 1.2953977584838867
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.160398483276367
+      Yaw: 2.3553967475891113
     Saved: ~
 Window Geometry:
   Displays:
