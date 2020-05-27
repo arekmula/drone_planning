@@ -23,13 +23,13 @@
 #include <fstream>
 #include <iomanip>
 
-#include <nav_msgs/Odometry.h>
-#include <visualization_msgs/Marker.h>
+
 
 octomap_msgs::Octomap globalOctoMap;
 sensor_msgs::PointCloud2 globalPointCloud;
 nav_msgs::OccupancyGrid globalOccupancyMap;
 visualization_msgs::MarkerArray markerArray;
+visualization_msgs::Marker marker;
 
 void octomapCallback(const octomap_msgs::OctomapPtr& msg)
 {
@@ -108,8 +108,7 @@ int main(int argc, char **argv)
       nav_msgs::Path plannedPath;
 
       /// Visualization marker
-      visualization_msgs::Marker marker;
-      marker.header.frame_id = "tf";
+      marker.header.frame_id = "odom";
       marker.header.stamp = ros::Time();
       marker.ns = "my_namespace";
       marker.id = 0;
@@ -120,10 +119,9 @@ int main(int argc, char **argv)
       marker.scale.z = 1.0;
       marker.color.a = 1.0; // Don't forget to set the alpha!
       marker.color.r = 1.0;
-      marker.color.g = 1.0;
+      marker.color.g = 0.0;
       marker.color.b = 0.0;
       marker.mesh_resource = "package://drone_planning/meshes/quadrotor/quadrotor_2.dae";
-
 
 
       /// calculating path
@@ -138,7 +136,8 @@ int main(int argc, char **argv)
       /// publishing path
       path_pub.publish(plannedPath);
 
-
+      /// Start point
+      float x_prev = -1.0 , y_prev = 0.5 , z_prev = 0.3;
 
       /// TFs
       for (int i = 0 ; i < plannedPath.poses.size() ; i++)
@@ -180,9 +179,9 @@ int main(int argc, char **argv)
           odom_pub.publish(odom);
 
           /// Drone marek pose
-          marker.pose.orientation.x = plannedPath.poses[i].pose.position.x;
-          marker.pose.orientation.y = plannedPath.poses[i].pose.position.y;
-          marker.pose.orientation.z = plannedPath.poses[i].pose.position.z;
+          marker.pose.position.x = plannedPath.poses[i].pose.position.x;
+          marker.pose.position.y = plannedPath.poses[i].pose.position.y;
+          marker.pose.position.z = plannedPath.poses[i].pose.position.z;
 
           /// Drone marker orientation
           marker.pose.orientation.x = 0.0;
@@ -190,17 +189,87 @@ int main(int argc, char **argv)
           marker.pose.orientation.z = 0.0;
           marker.pose.orientation.w = 1.0;
 
-          /// ADD DRONE
-          marker.action = visualization_msgs::Marker::ADD;
+          /// Distance beetwen points
+          int number_of_stamples = 100;
+          float delay = 0.1;
+          float distance = sqrt(pow(plannedPath.poses[i].pose.position.x - x_prev , 2)  +
+                  pow(plannedPath.poses[i].pose.position.y - y_prev , 2) +
+                  pow(plannedPath.poses[i].pose.position.z - z_prev , 2));
 
-          /// publishing marker
-          vis_pub.publish(marker);
+          float step_x, step_y, step_z;
+          step_x = abs(plannedPath.poses[i].pose.position.x - x_prev) / number_of_stamples;
+          step_y = abs(plannedPath.poses[i].pose.position.y - y_prev) / number_of_stamples;
+          step_z = abs(plannedPath.poses[i].pose.position.z - z_prev) / number_of_stamples;
 
-          ros::Duration(1.0).sleep();
+          float X = x_prev , Y = y_prev, Z = z_prev;
+          /// X
+          if(X < plannedPath.poses[i].pose.position.x)
+          {
+              X  = (step_x * abs(plannedPath.poses[i].pose.position.x - x_prev))/ distance + x_prev;
+          }
+          if(X > plannedPath.poses[i].pose.position.x)
+          {
+              X  = -1 * (step_x * abs(plannedPath.poses[i].pose.position.x - x_prev))/ distance + x_prev;
+          }
+          /// Y
+          if(Y < plannedPath.poses[i].pose.position.y)
+          {
+              Y  = (step_y * abs(plannedPath.poses[i].pose.position.y - y_prev))/ distance + y_prev;
+          }
+          if(Y > plannedPath.poses[i].pose.position.y)
+          {
+              Y  = -1 * (step_y * abs(plannedPath.poses[i].pose.position.y - y_prev))/ distance + y_prev;
+          }
+          /// Z
+          if(Z < plannedPath.poses[i].pose.position.z)
+          {
+              Z  = (step_z * abs(plannedPath.poses[i].pose.position.z - z_prev))/ distance + z_prev;
+          }
+          if(Z > plannedPath.poses[i].pose.position.z)
+          {
+              Z  = -1 * (step_z * abs(plannedPath.poses[i].pose.position.z - z_prev))/ distance + z_prev;
+          }
 
-          /// DELETE DRONE
-          marker.action = visualization_msgs::Marker::DELETE;
-          
+
+
+          for (int j = 0; j < number_of_stamples; j++)
+          {
+              /// X
+              if(X < plannedPath.poses[i].pose.position.x)
+              {X  = X + step_x;}
+              if(X > plannedPath.poses[i].pose.position.x)
+              {X  = X - step_x;}
+              /// Y
+              if(Y < plannedPath.poses[i].pose.position.y)
+              {Y  = Y + step_y;}
+              if(Y > plannedPath.poses[i].pose.position.y)
+              {Y  = Y - step_y;}
+              /// Z
+              if(Z < plannedPath.poses[i].pose.position.z)
+              {Z  = Z + step_z;}
+              if(Z > plannedPath.poses[i].pose.position.z)
+              {Z  = Z - step_z;}
+
+              marker.pose.position.x = X;
+              marker.pose.position.y = Y;
+              marker.pose.position.z = Z;
+              /// ADD DRONE
+              marker.action = visualization_msgs::Marker::ADD;
+
+              /// publishing marker drone
+              vis_pub.publish(marker);
+
+              /// Delay
+              ros::Duration(delay).sleep();
+
+              /// DELETE DRONE
+              marker.action = visualization_msgs::Marker::DELETE;
+          }
+
+      x_prev =  plannedPath.poses[i].pose.position.x;
+      y_prev =  plannedPath.poses[i].pose.position.y;
+      z_prev =  plannedPath.poses[i].pose.position.z;
+
       }
 
 
