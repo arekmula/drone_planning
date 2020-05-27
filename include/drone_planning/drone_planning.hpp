@@ -16,7 +16,8 @@
 #include <nav_msgs/Path.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <ros/package.h>
-
+#include <nav_msgs/Odometry.h>
+#include <visualization_msgs/Marker.h>
 
 #include <fcl/config.h>
 #include <fcl/geometry/octree/octree.h>

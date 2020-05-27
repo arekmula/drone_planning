@@ -117,46 +117,40 @@ Visualization Manager:
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
-      Enabled: true
+      Enabled: false
       Links:
         All Links Enabled: true
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        odom:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
       Update Interval: 0
-      Value: true
+      Value: false
       Visual Enabled: true
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        drone:
-          Value: true
-        odom:
-          Value: false
-        tf:
-          Value: true
       Marker Scale: 3
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        odom:
-          drone:
-            tf:
-              {}
+        {}
       Update Interval: 0
+      Value: false
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /drone_planning_node/visualization_marker
+      Name: Marker
+      Namespaces:
+        my_namespace: true
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
@@ -186,7 +180,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 20.860702514648438
+      Distance: 10.091282844543457
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -201,10 +195,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.2953977584838867
+      Pitch: 1.3753962516784668
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.3553967475891113
+      Yaw: 1.6404021978378296
     Saved: ~
 Window Geometry:
   Displays:
