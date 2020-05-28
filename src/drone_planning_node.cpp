@@ -153,7 +153,10 @@ int main(int argc, char **argv)
 
           broadcaster.sendTransform(
                   tf::StampedTransform(
-                          tf::Transform(tf::Quaternion(0, 0, 0, 1),
+                          tf::Transform(tf::Quaternion(plannedPath.poses[i].pose.orientation.x,
+                                            plannedPath.poses[i].pose.orientation.y,
+                                            plannedPath.poses[i].pose.orientation.z,
+                                            plannedPath.poses[i].pose.orientation.w),
                                   tf::Vector3(plannedPath.poses[i].pose.position.x + 1,
                                           plannedPath.poses[i].pose.position.y - 0.5,
                                           plannedPath.poses[i].pose.position.z - 0.3)),
@@ -184,10 +187,10 @@ int main(int argc, char **argv)
           marker.pose.position.z = plannedPath.poses[i].pose.position.z;
 
           /// Drone marker orientation
-          marker.pose.orientation.x = 0.0;
-          marker.pose.orientation.y = 0.0;
-          marker.pose.orientation.z = 0.0;
-          marker.pose.orientation.w = 1.0;
+          marker.pose.orientation.x = plannedPath.poses[i].pose.orientation.x;
+          marker.pose.orientation.y = plannedPath.poses[i].pose.orientation.y;
+          marker.pose.orientation.z = plannedPath.poses[i].pose.orientation.z;
+          marker.pose.orientation.w = plannedPath.poses[i].pose.orientation.w;
 
           /// Distance beetwen points
           int number_of_stamples = 100;

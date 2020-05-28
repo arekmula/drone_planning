@@ -56,6 +56,19 @@ bool isStateValid(const ompl::base::State *state)
     q.y() = quaternion->y;
     q.z() = quaternion->z;
     q.w() = quaternion->w;
+    /// Ograniczenie kąta w X, Y, Z
+    if(quaternion->x > 0.2 || quaternion->x < -0.2)
+    {
+        return false;
+    }
+    if(quaternion->y > 0.2 || quaternion->y < -0.2)
+    {
+        return false;
+    }
+    if(quaternion->z > 0.01 || quaternion->z < -0.01)
+    {
+        return false;
+    }
     /// convert quaternion to rotation Matrix
     R = q.normalized().toRotationMatrix();
     /// Transform is configured according to R and T
