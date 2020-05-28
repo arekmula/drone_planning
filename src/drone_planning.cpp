@@ -56,6 +56,19 @@ bool isStateValid(const ompl::base::State *state)
     q.y() = quaternion->y;
     q.z() = quaternion->z;
     q.w() = quaternion->w;
+    /// Ograniczenie kąta w X, Y, Z
+    if(quaternion->x > 0.2 || quaternion->x < -0.2)
+    {
+        return false;
+    }
+    if(quaternion->y > 0.2 || quaternion->y < -0.2)
+    {
+        return false;
+    }
+    if(quaternion->z > 0.01 || quaternion->z < -0.01)
+    {
+        return false;
+    }
     /// convert quaternion to rotation Matrix
     R = q.normalized().toRotationMatrix();
     /// Transform is configured according to R and T
@@ -188,15 +201,17 @@ nav_msgs::Path Planner3D::extractPath(ompl::base::ProblemDefinition *pdef)
         /// get coordinates of robot
         const auto *coordinates = state->as<ompl::base::CompoundState>()->
                 as<ompl::base::RealVectorStateSpace::StateType>(0);
+        const auto *rotation = state->as<ompl::base::CompoundState>()->
+                as<ompl::base::SO3StateSpace::StateType>(1);
         /// fill in the ROS PoseStamped Structure
         geometry_msgs::PoseStamped poseMsg;
         poseMsg.pose.position.x = coordinates->values[0];
         poseMsg.pose.position.y = coordinates->values[1];
         poseMsg.pose.position.z = coordinates->values[2];
-        poseMsg.pose.orientation.w = 1.0; // in the future this might also be calculated from coordinates, probably [3,4,5,6]
-        poseMsg.pose.orientation.x = 0.0;
-        poseMsg.pose.orientation.y = 0.0;
-        poseMsg.pose.orientation.z = 0.0;
+        poseMsg.pose.orientation.w = rotation->w;
+        poseMsg.pose.orientation.x = rotation->x;
+        poseMsg.pose.orientation.y = rotation->y;
+        poseMsg.pose.orientation.z = rotation->z;
         poseMsg.header.frame_id = "/odom";
         poseMsg.header.stamp = ros::Time::now();
         /// add poseStamped to the path
