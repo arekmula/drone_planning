@@ -57,15 +57,11 @@ bool isStateValid(const ompl::base::State *state)
     q.z() = quaternion->z;
     q.w() = quaternion->w;
     /// Ograniczenie kąta w X, Y, Z
-    if(quaternion->x > 0.2 || quaternion->x < -0.2)
+    if(quaternion->x > 0.348 || quaternion->x < -0.348)
     {
         return false;
     }
-    if(quaternion->y > 0.2 || quaternion->y < -0.2)
-    {
-        return false;
-    }
-    if(quaternion->z > 0.01 || quaternion->z < -0.01)
+    if(quaternion->y > 0.348 || quaternion->y < -0.348)
     {
         return false;
     }
