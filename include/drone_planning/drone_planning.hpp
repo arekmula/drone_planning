@@ -106,9 +106,6 @@
 #include <random>
 
 
-
-
-
 namespace drone_planning{
 
 class Planner3D
@@ -131,11 +128,8 @@ public:
      */
     nav_msgs::Path planPath(const octomap_msgs::Octomap& octomapMsg);
 
-    /// get current start Position
+    /// get current start Position - > Useful in visualization
     void getStartPosition(float &xPos, float &yPos, float &zPos);
-
-    /// get new random goal position
-    void randomizeNewGoalPosition(void);
 
 
 private:
@@ -144,9 +138,6 @@ private:
 
     /// problem dimension
     int dim;
-
-    /// max step Length
-    double maxStepLength;
 
     /// bounds for all dimensions
     std::shared_ptr<ompl::base::RealVectorBounds> bounds;
@@ -161,12 +152,21 @@ private:
     /// configure
     void configure(void);
 
+    /// get new random goal state
+    void randomizeNewGoalState(void);
+
+    /// save last start state to visualize movement of drone
+    void saveStartState(void);
+
     /// extract path function
     nav_msgs::Path extractPath(ompl::base::ProblemDefinition* pdef);
 
+    /// initial move
+    bool initialMove = true;
 
-
-
+    /// Goal and start positions. Useful in visualization
+    float xGoal, yGoal, zGoal;
+    float xStart, yStart, zStart;
 };
 
 }

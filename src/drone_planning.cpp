@@ -56,7 +56,7 @@ bool isStateValid(const ompl::base::State *state)
     q.y() = quaternion->y;
     q.z() = quaternion->z;
     q.w() = quaternion->w;
-    /// Ograniczenie kąta w X, Y, Z
+    /// X, Y, Z axes angle limit
     if(quaternion->x > 0.348 || quaternion->x < -0.348)
     {
         return false;
@@ -89,90 +89,128 @@ bool isStateValid(const ompl::base::State *state)
 
 void loadRobotMesh(const char* filename, std::vector<fcl::Vector3f>& points, std::vector<fcl::Triangle>& triangles){
 
-  FILE* file = fopen(filename, "rb");
-  if(!file)
-  {
-    std::cout << "file not exist" << "\n";
-    return;
-  }
-  else{
-      std::cout << "Started reading mesh data" << "\n";
-  }
-
-  bool has_normal = false;
-  bool has_texture = false;
-  char line_buffer[2000];
-  while(fgets(line_buffer, 2000, file))
-  {
-    char* first_token = strtok(line_buffer, "\r\n\t ");
-    if(!first_token || first_token[0] == '#' || first_token[0] == 0)
-      continue;
-
-    switch(first_token[0])
+    FILE* file = fopen(filename, "rb");
+    if(!file)
     {
-    case 'v':
-      {
-        if(first_token[1] == 'n')
-        {
-          strtok(NULL, "\t ");
-          strtok(NULL, "\t ");
-          strtok(NULL, "\t ");
-          has_normal = true;
-        }
-        else if(first_token[1] == 't')
-        {
-          strtok(NULL, "\t ");
-          strtok(NULL, "\t ");
-          has_texture = true;
-        }
-        else
-        {
-          fcl::FCL_REAL x = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
-          fcl::FCL_REAL y = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
-          fcl::FCL_REAL z = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
-          fcl::Vector3f p(x, y, z);
-          points.push_back(p);
-        }
-      }
-      break;
-    case 'f':
-      {
-        fcl::Triangle tri;
-        char* data[30];
-        int n = 0;
-        while((data[n] = strtok(NULL, "\t \r\n")) != NULL)
-        {
-          if(strlen(data[n]))
-            n++;
-        }
+        std::cout << "file not exist" << "\n";
+        return;
+    }
+    else{
+        std::cout << "Started reading mesh data" << "\n";
+    }
 
-        for(int t = 0; t < (n - 2); ++t)
+    bool has_normal = false;
+    bool has_texture = false;
+    char line_buffer[2000];
+    while(fgets(line_buffer, 2000, file))
+    {
+        char* first_token = strtok(line_buffer, "\r\n\t ");
+        if(!first_token || first_token[0] == '#' || first_token[0] == 0)
+            continue;
+
+        switch(first_token[0])
         {
-          if((!has_texture) && (!has_normal))
-          {
-            tri[0] = atoi(data[0]) - 1;
-            tri[1] = atoi(data[1]) - 1;
-            tri[2] = atoi(data[2]) - 1;
-          }
-          else
-          {
-            const char *v1;
-            for(int i = 0; i < 3; i++)
+        case 'v':
+        {
+            if(first_token[1] == 'n')
             {
-              // vertex ID
-              if(i == 0)
-                v1 = data[0];
-              else
-                v1 = data[t + i];
-
-              tri[i] = atoi(v1) - 1;
+                strtok(NULL, "\t ");
+                strtok(NULL, "\t ");
+                strtok(NULL, "\t ");
+                has_normal = true;
             }
-          }
-          triangles.push_back(tri);
+            else if(first_token[1] == 't')
+            {
+                strtok(NULL, "\t ");
+                strtok(NULL, "\t ");
+                has_texture = true;
+            }
+            else
+            {
+                fcl::FCL_REAL x = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
+                fcl::FCL_REAL y = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
+                fcl::FCL_REAL z = (fcl::FCL_REAL)atof(strtok(NULL, "\t "));
+                fcl::Vector3f p(x, y, z);
+                points.push_back(p);
+            }
         }
-      }
+            break;
+        case 'f':
+        {
+            fcl::Triangle tri;
+            char* data[30];
+            int n = 0;
+            while((data[n] = strtok(NULL, "\t \r\n")) != NULL)
+            {
+                if(strlen(data[n]))
+                    n++;
+            }
+
+            for(int t = 0; t < (n - 2); ++t)
+            {
+                if((!has_texture) && (!has_normal))
+                {
+                    tri[0] = atoi(data[0]) - 1;
+                    tri[1] = atoi(data[1]) - 1;
+                    tri[2] = atoi(data[2]) - 1;
+                }
+                else
+                {
+                    const char *v1;
+                    for(int i = 0; i < 3; i++)
+                    {
+                        // vertex ID
+                        if(i == 0)
+                            v1 = data[0];
+                        else
+                            v1 = data[t + i];
+
+                        tri[i] = atoi(v1) - 1;
+                    }
+                }
+                triangles.push_back(tri);
+            }
+        }
+        }
     }
 }
+
+bool isRandomStateValid(float xPos, float yPos, float zPos)
+{
+    /// R and T are the rotation matrix and translation vector of drone
+    fcl::Matrix3f R;
+    fcl::Vector3f T;
+    /// save current drone translation based on state to FCL translation vector
+    T(0) = xPos; /// x
+    T(1) = yPos; /// y
+    T(2) = zPos; /// z
+    /// save current drone rotation in quaternion to FCL quaternion
+    fcl::Quaternionf q;
+    q.x() = 0.0;
+    q.y() = 0.0;
+    q.z() = 0.0;
+    q.w() = 1.0;
+    /// convert quaternion to rotation Matrix
+    R = q.normalized().toRotationMatrix();
+    /// Transform is configured according to R and T
+    fcl::Transform3f pose = fcl::Transform3f::Identity(); /// pose of drone
+    pose.linear()=R;
+    pose.translation()=T;
+    /// geom and pose(tf in tutorial, https://github.com/flexible-collision-library/fcl)
+    /// are the geometry and the transform of the object
+    fcl::CollisionObjectf* drone = new fcl::CollisionObjectf(geom,pose); /// collision object of drone
+    /// create request and result variables
+    fcl::CollisionRequest<float> request;
+    fcl::CollisionResult<float> result;
+    /// check if there is collision between drone and enviroment
+    int collides = fcl::collide(drone, globalCollisionObjectOcTree, request, result);
+    /// if there's any collision return state as invalid
+    if (collides>0)
+    {
+        return false;
+    }
+    std::cout << "Found new random goal state" << "\n";
+    return true;
 }
 
 
@@ -267,63 +305,81 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
     /// setup the planner, after all settings for the space and planner are done
     planner->setup();
     /// problem status
-    ompl::base::PlannerStatus solved = planner->ompl::base::Planner::solve(1.0);
+    std::cout << "Searching for path for next 10 seconds" << "\n";
+    ompl::base::PlannerStatus solved = planner->ompl::base::Planner::solve(10.0);
     /// check if problem is solved
     if (solved)
     {
         /// extract path from problem definition
         plannedPath = extractPath(pdef.get());
+        initialMove=false; ///
+        /// save current start position to pass it to visualization
+        saveStartState();
+        /// randomize
+        randomizeNewGoalState();
     }
     return plannedPath;
 
 }
 
-void Planner3D::randomizeNewGoalPosition(void)
+void Planner3D::saveStartState(void)
 {
-    /// set reached point as new start point
-    start = goal;
+    xStart = (*start.get())[0];
+    yStart = (*start.get())[1];
+    zStart = (*start.get())[2];
+}
 
 
-    float x_low = -7.6, x_high = 7.85;
-    float y_low = -7.9, y_high = 5.4;
-    float z_low = 0, z_high = 2.35;
 
-    srand(time(NULL));
+void Planner3D::randomizeNewGoalState(void)
+{
+    start.reset(new ompl::base::ScopedState<>(space));
+    if (!initialMove)
+    {
+        (*start.get())[0]=xGoal; /// x
+        (*start.get())[1]=yGoal; /// y
+        (*start.get())[2]=zGoal; /// z
+        (*start.get())[3]=0.0; /// qx
+        (*start.get())[4]=0.0; /// qy
+        (*start.get())[5]=0.0; /// qz
+        (*start.get())[6]=1.0; /// qw
 
-    float x = x_low + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(x_high-x_low)));
-    float y = y_low + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(y_high-y_low)));
-    float z = z_low + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(z_high-z_low)));
-
-    std::cout << x << " " << y << " " << z << "\n";
-
-    (*goal.get())[0]=x; /// x
-    (*goal.get())[1]=y; /// y
-    (*goal.get())[2]=z; /// z
-
-    /// TODO: set last goal position as new start position
+        xGoal=0, yGoal=0, zGoal=0;
+        while (!isRandomStateValid(xGoal, yGoal, zGoal))
+        {
+            goal.reset(new ompl::base::ScopedState<>(space));
+            goal.get()->random();
+            (*goal.get())[3]=0.0; /// qx
+            (*goal.get())[4]=0.0; /// qy
+            (*goal.get())[5]=0.0; /// qz
+            (*goal.get())[6]=1.0; /// qw
+            xGoal = (*goal.get())[0];
+            yGoal = (*goal.get())[1];
+            zGoal = (*goal.get())[2];
+        }
+    }
     /// TODO: add a possibility to quickly change between random goal positions and set goal positions
 
 }
 
+
+
 void Planner3D::getStartPosition(float &xPos, float &yPos, float &zPos)
 {
-    xPos = float((*start.get())[0]);
-    yPos = float((*start.get())[1]);
-    zPos = float((*start.get())[2]);
+    xPos = xStart;
+    yPos = yStart;
+    zPos = zStart;
 }
 
 void Planner3D::configure(void)
 {
     dim = 3; ///3D Problem
-    maxStepLength = 0.1; /// max step length
 
     /// relative path to robot's mesh
     string meshPath =  ros::package::getPath("drone_planning") + "/meshes/quadrotor/quadrotor_2.obj"; /// tried .dae .stl
 
     /// loading drone's mesh
     loadRobotMesh(meshPath.c_str(), droneMeshVertices, droneMeshTriangles);
-    std::cout <<"meshPoints size " <<  droneMeshVertices.size() << "\n";
-    std::cout <<"meshTriangles size " <<  droneMeshTriangles.size() << "\n";
 
     /// add the mesh data into the BVHModel structure
     geom = std::make_shared<Model>();
@@ -331,11 +387,11 @@ void Planner3D::configure(void)
     geom->addSubModel(droneMeshVertices, droneMeshTriangles);
     geom->endModel();
 
-
+    /// initialize SE3 Space and Bounds
     space.reset(new ompl::base::SE3StateSpace());
-
     bounds.reset(new ompl::base::RealVectorBounds(dim));
 
+    srand(time(NULL));
 
     /// Set the lower and higher bound for each dimension.
     /// Based on data from globalOcTree
@@ -354,9 +410,8 @@ void Planner3D::configure(void)
     /// apply bounds to state space
     space->setBounds(*bounds.get());
 
-    /// define starting state
+    /// set initial start and goal states
     start.reset(new ompl::base::ScopedState<>(space));
-
     (*start.get())[0]=-1.0; /// x
     (*start.get())[1]=0.5; /// y
     (*start.get())[2]=0.3; /// z
@@ -365,7 +420,6 @@ void Planner3D::configure(void)
     (*start.get())[5]=0.0; /// qz
     (*start.get())[6]=1.0; /// qw
 
-    /// define goal state
     goal.reset(new ompl::base::ScopedState<>(space));
     (*goal.get())[0]=5.3; /// x
     (*goal.get())[1]=2.6; /// y
@@ -374,6 +428,11 @@ void Planner3D::configure(void)
     (*goal.get())[4]=0.0; /// qy
     (*goal.get())[5]=0.0; /// qz
     (*goal.get())[6]=1.0; /// qw
+
+    /// save goal position, as we assume that rotation in goal state is always (0, 0, 0, 1)
+    xGoal = (*goal.get())[0];
+    yGoal = (*goal.get())[1];
+    zGoal = (*goal.get())[2];
 
 }
 }
