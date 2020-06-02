@@ -103,7 +103,7 @@
 #include <string>
 
 #include <array>
-
+#include <random>
 
 
 
@@ -130,8 +130,12 @@ public:
      * @param octomapMsg - Octomap message of enviroment
      */
     nav_msgs::Path planPath(const octomap_msgs::Octomap& octomapMsg);
-    /// robot mesh points
 
+    /// get current start Position
+    void getStartPosition(float &xPos, float &yPos, float &zPos);
+
+    /// get new random goal position
+    void randomizeNewGoalPosition(void);
 
 
 private:
@@ -159,6 +163,8 @@ private:
 
     /// extract path function
     nav_msgs::Path extractPath(ompl::base::ProblemDefinition* pdef);
+
+
 
 
 };

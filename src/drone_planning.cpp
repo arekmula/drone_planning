@@ -278,6 +278,40 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
 
 }
 
+void Planner3D::randomizeNewGoalPosition(void)
+{
+    /// set reached point as new start point
+    start = goal;
+
+
+    float x_low = -7.6, x_high = 7.85;
+    float y_low = -7.9, y_high = 5.4;
+    float z_low = 0, z_high = 2.35;
+
+    srand(time(NULL));
+
+    float x = x_low + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(x_high-x_low)));
+    float y = y_low + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(y_high-y_low)));
+    float z = z_low + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(z_high-z_low)));
+
+    std::cout << x << " " << y << " " << z << "\n";
+
+    (*goal.get())[0]=x; /// x
+    (*goal.get())[1]=y; /// y
+    (*goal.get())[2]=z; /// z
+
+    /// TODO: set last goal position as new start position
+    /// TODO: add a possibility to quickly change between random goal positions and set goal positions
+
+}
+
+void Planner3D::getStartPosition(float &xPos, float &yPos, float &zPos)
+{
+    xPos = float((*start.get())[0]);
+    yPos = float((*start.get())[1]);
+    zPos = float((*start.get())[2]);
+}
+
 void Planner3D::configure(void)
 {
     dim = 3; ///3D Problem

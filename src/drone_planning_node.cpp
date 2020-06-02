@@ -42,7 +42,7 @@ void octomapCallback(const octomap_msgs::OctomapPtr& msg)
 }
 
 void moveDrone(const nav_msgs::Path& plannedPath, const ros::Publisher& odom_pub,tf::TransformBroadcaster& broadcaster,
-               const ros::Publisher& vis_pub)
+               const ros::Publisher& vis_pub, drone_planning::Planner3D planner_)
 {
     /// Visualization marker
     marker.header.frame_id = "odom";
@@ -62,6 +62,7 @@ void moveDrone(const nav_msgs::Path& plannedPath, const ros::Publisher& odom_pub
 
     /// Start point
     float x_prev = -1.0 , y_prev = 0.5 , z_prev = 0.3;
+//    float x_prev = startPoints[0], y_prev = startPoints[1], z_prev = startPoints[2];
 
     /// TFs
     for (int i = 0 ; i < plannedPath.poses.size() ; i++)
@@ -72,7 +73,7 @@ void moveDrone(const nav_msgs::Path& plannedPath, const ros::Publisher& odom_pub
         broadcaster.sendTransform(
                 tf::StampedTransform(
                         tf::Transform(tf::Quaternion(0, 0, 0, 1),
-                                tf::Vector3(-1, 0.5, 0.3)),
+                                tf::Vector3(x_prev, y_prev, z_prev)),
                         ros::Time::now(), "odom","drone"));
 
         broadcaster.sendTransform(
@@ -81,9 +82,9 @@ void moveDrone(const nav_msgs::Path& plannedPath, const ros::Publisher& odom_pub
                                           plannedPath.poses[i].pose.orientation.y,
                                           plannedPath.poses[i].pose.orientation.z,
                                           plannedPath.poses[i].pose.orientation.w),
-                                tf::Vector3(plannedPath.poses[i].pose.position.x + 1,
-                                        plannedPath.poses[i].pose.position.y - 0.5,
-                                        plannedPath.poses[i].pose.position.z - 0.3)),
+                                tf::Vector3(plannedPath.poses[i].pose.position.x + x_prev,
+                                        plannedPath.poses[i].pose.position.y - y_prev,
+                                        plannedPath.poses[i].pose.position.z - z_prev)),
                         ros::Time::now(), "drone","tf"));
         geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(0);
         nav_msgs::Odometry odom;
@@ -198,6 +199,9 @@ void moveDrone(const nav_msgs::Path& plannedPath, const ros::Publisher& odom_pub
     z_prev =  plannedPath.poses[i].pose.position.z;
 
     }
+    float xPos, yPos, zPos;
+    planner_.getStartPosition(xPos, yPos, zPos);
+    planner_.randomizeNewGoalPosition();
 
 
 }
@@ -232,21 +236,19 @@ int main(int argc, char **argv)
   while (ros::ok()){
       nav_msgs::Path plannedPath;
 
-
-
       /// calculating path
       if(globalOctoMap.data.size()>0) /// make sure that node has subsribed to octomap data
       {
           plannedPath = planner_.planPath(globalOctoMap);
           // std::cout<<plannedPath<<"\n";
           // std::cout<<"Sciezka \n";
+          /// publishing path
+          path_pub.publish(plannedPath);
+          moveDrone(plannedPath,odom_pub, broadcaster, vis_pub, planner_);
 
+          /// get new path
       }
 
-      /// publishing path
-      path_pub.publish(plannedPath);
-
-      moveDrone(plannedPath,odom_pub, broadcaster, vis_pub);
 
 
       ros::spinOnce();
