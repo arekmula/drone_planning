@@ -35,6 +35,7 @@ Planner3D::~Planner3D()
 {
 }
 
+
 bool isStateValid(const ompl::base::State *state)
 {
     /// get current coordinnates of the robot
@@ -308,7 +309,7 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
     planner->setup();
     /// problem status
     std::cout << "Searching for path for next 10 seconds" << "\n";
-    ompl::base::PlannerStatus solved = planner->ompl::base::Planner::solve(10.0);
+    ompl::base::PlannerStatus solved = planner->ompl::base::Planner::solve(20.0);
     /// check if planner found exact solution
     if (solved == ompl::base::PlannerStatus::EXACT_SOLUTION)
     {
@@ -326,10 +327,10 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
 
 void Planner3D::saveStartState(void)
 {
+    /// Save last start state to pass it to visualization function
     xStart = (*start.get())[0];
     yStart = (*start.get())[1];
     zStart = (*start.get())[2];
-
     std::cout << "Saved start state: " << xStart << " " << yStart << " " << zStart << "\n";
 }
 
@@ -337,7 +338,7 @@ void Planner3D::saveStartState(void)
 
 void Planner3D::randomizeNewGoalState(void)
 {
-//    start.reset(new ompl::base::ScopedState<>(space));
+    /// if it's not first move then get new goal state
     if (!initialMove)
     {
         (*start.get())[0]=xGoal; /// x
@@ -347,12 +348,12 @@ void Planner3D::randomizeNewGoalState(void)
         (*start.get())[4]=0.0; /// qy
         (*start.get())[5]=0.0; /// qz
         (*start.get())[6]=1.0; /// qw
-
-        xGoal=0, yGoal=0, zGoal=0;
-        while (!isRandomStateValid(xGoal, yGoal, zGoal))
+    /// visit all intresting positions
+        if (curPosition < intrestingPositionsNumber)
         {
-//            goal.reset(new ompl::base::ScopedState<>(space));
-            goal.get()->random();
+            (*goal.get())[0]=intrestingX[curPosition]; /// qx
+            (*goal.get())[1]=intrestingY[curPosition]; /// qy
+            (*goal.get())[2]=0.3; /// qz
             (*goal.get())[3]=0.0; /// qx
             (*goal.get())[4]=0.0; /// qy
             (*goal.get())[5]=0.0; /// qz
@@ -360,9 +361,23 @@ void Planner3D::randomizeNewGoalState(void)
             xGoal = (*goal.get())[0];
             yGoal = (*goal.get())[1];
             zGoal = (*goal.get())[2];
+            curPosition++;
         }
+        else{
+            /// if drone visited all intresting positions then get new random goal position
+            xGoal=0, yGoal=0, zGoal=0;
+            while (!isRandomStateValid(xGoal, yGoal, zGoal))
+            {
+                goal.get()->random();
+                (*goal.get())[3]=0.0; /// qx
+                (*goal.get())[4]=0.0; /// qy
+                (*goal.get())[5]=0.0; /// qz
+                (*goal.get())[6]=1.0; /// qw
+                xGoal = (*goal.get())[0];
+                yGoal = (*goal.get())[1];
+                zGoal = (*goal.get())[2];
+            }}
     }
-    /// TODO: add a possibility to quickly change between random goal positions and set goal positions
     std::cout << "Start state copied from last goal: " << (*start.get())[0] << " " << (*start.get())[1]<<
                  " " << (*start.get())[2] << "\n";
     std::cout << "Randomized goal state: " << (*goal.get())[0] << " " << (*goal.get())[1]<<
@@ -374,6 +389,7 @@ void Planner3D::randomizeNewGoalState(void)
 
 void Planner3D::getStartPosition(float &xPos, float &yPos, float &zPos)
 {
+    /// return start position to visualization function
     xPos = xStart;
     yPos = yStart;
     zPos = zStart;
@@ -413,7 +429,7 @@ void Planner3D::configure(void)
 
     /// z axis
     bounds->setLow(2, 0.0);
-    bounds->setHigh(2, 2.35);
+    bounds->setHigh(2, 2.0);
 
     /// apply bounds to state space
     space->setBounds(*bounds.get());
@@ -429,9 +445,9 @@ void Planner3D::configure(void)
     (*start.get())[6]=1.0; /// qw
 
     goal.reset(new ompl::base::ScopedState<>(space));
-    (*goal.get())[0]=5.3; /// x
-    (*goal.get())[1]=2.6; /// y
-    (*goal.get())[2]=2.0; /// z
+    (*goal.get())[0]=5.3; /// x ///5.3
+    (*goal.get())[1]=2.6; /// y ///2.6
+    (*goal.get())[2]=2.0; /// z ///2.0
     (*goal.get())[3]=0.0; /// qx
     (*goal.get())[4]=0.0; /// qy
     (*goal.get())[5]=0.0; /// qz
@@ -443,4 +459,6 @@ void Planner3D::configure(void)
     zGoal = (*goal.get())[2];
 
 }
+
+
 }

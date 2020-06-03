@@ -133,6 +133,7 @@ public:
 
 
 private:
+
     /// node handle
     ros::NodeHandle& nodeHandle;
 
@@ -145,6 +146,14 @@ private:
     /// starting and goal position
     std::shared_ptr<ompl::base::ScopedState<>> start;
     std::shared_ptr<ompl::base::ScopedState<>> goal;
+
+    /// intersting points to visit on our octomoap
+    /// under pool table, in the little room, under table in biggest room, back room
+    float intrestingX[4] = {4.92, 0.96,-2.75, -6.37};
+    float intrestingY[4] = {2.80, 2.09, 2.42, -2.32};
+
+    unsigned int intrestingPositionsNumber = 4;
+    int curPosition = 0;
 
     /// space of problem
     std::shared_ptr<ompl::base::SE3StateSpace> space;
@@ -161,12 +170,17 @@ private:
     /// extract path function
     nav_msgs::Path extractPath(ompl::base::ProblemDefinition* pdef);
 
+    /// add intresting goal positions to vector
+    void addIntrestingGoalPositions(void);
+
     /// initial move
     bool initialMove = true;
 
     /// Goal and start positions. Useful in visualization
     float xGoal, yGoal, zGoal;
     float xStart, yStart, zStart;
+
+
 };
 
 }

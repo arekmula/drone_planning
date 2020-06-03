@@ -113,7 +113,7 @@ void moveDrone(const nav_msgs::Path& plannedPath, const ros::Publisher& odom_pub
 
         /// Distance beetwen points
         int number_of_stamples = 100;
-        float delay = 0.1;
+        float delay = 0.05;
         float distance = sqrt(pow(plannedPath.poses[i].pose.position.x - x_prev , 2)  +
                               pow(plannedPath.poses[i].pose.position.y - y_prev , 2) +
                               pow(plannedPath.poses[i].pose.position.z - z_prev , 2));
