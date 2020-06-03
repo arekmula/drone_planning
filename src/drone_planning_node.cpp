@@ -58,6 +58,8 @@ void moveDrone(const nav_msgs::Path& plannedPath, const ros::Publisher& odom_pub
     /// Start point
     float x_prev =0.0 , y_prev = 0.0 , z_prev = 0.0;
     planner_.getStartPosition(x_prev, y_prev, z_prev);
+    std::cout << "Visualized start state: " << x_prev << " " << y_prev << " " << z_prev << "\n";
+
 
     /// TFs
     for (int i = 0 ; i < plannedPath.poses.size() ; i++)

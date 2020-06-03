@@ -298,8 +298,10 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
     auto pdef(std::make_shared<ompl::base::ProblemDefinition>(si));
     /// set the start and goal states for the problem definiton
     pdef->setStartAndGoalStates(*start.get(),*goal.get());
+    std::cout << "Start used by planner: " << *start.get() << "\n";
+    std::cout << "Goal used by planner: " << *goal.get() << "\n";
     /// create instance of planner
-    auto planner(std::make_shared<ompl::geometric::LazyPRMstar>(si));
+    auto planner(std::make_shared<ompl::geometric::RRTConnect>(si));
     /// tell planner which problem we are intrested in solving
     planner->setProblemDefinition(pdef);
     /// setup the planner, after all settings for the space and planner are done
@@ -307,8 +309,8 @@ nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
     /// problem status
     std::cout << "Searching for path for next 10 seconds" << "\n";
     ompl::base::PlannerStatus solved = planner->ompl::base::Planner::solve(10.0);
-    /// check if problem is solved
-    if (solved)
+    /// check if planner found exact solution
+    if (solved == ompl::base::PlannerStatus::EXACT_SOLUTION)
     {
         /// extract path from problem definition
         plannedPath = extractPath(pdef.get());
@@ -327,13 +329,15 @@ void Planner3D::saveStartState(void)
     xStart = (*start.get())[0];
     yStart = (*start.get())[1];
     zStart = (*start.get())[2];
+
+    std::cout << "Saved start state: " << xStart << " " << yStart << " " << zStart << "\n";
 }
 
 
 
 void Planner3D::randomizeNewGoalState(void)
 {
-    start.reset(new ompl::base::ScopedState<>(space));
+//    start.reset(new ompl::base::ScopedState<>(space));
     if (!initialMove)
     {
         (*start.get())[0]=xGoal; /// x
@@ -347,7 +351,7 @@ void Planner3D::randomizeNewGoalState(void)
         xGoal=0, yGoal=0, zGoal=0;
         while (!isRandomStateValid(xGoal, yGoal, zGoal))
         {
-            goal.reset(new ompl::base::ScopedState<>(space));
+//            goal.reset(new ompl::base::ScopedState<>(space));
             goal.get()->random();
             (*goal.get())[3]=0.0; /// qx
             (*goal.get())[4]=0.0; /// qy
@@ -359,6 +363,10 @@ void Planner3D::randomizeNewGoalState(void)
         }
     }
     /// TODO: add a possibility to quickly change between random goal positions and set goal positions
+    std::cout << "Start state copied from last goal: " << (*start.get())[0] << " " << (*start.get())[1]<<
+                 " " << (*start.get())[2] << "\n";
+    std::cout << "Randomized goal state: " << (*goal.get())[0] << " " << (*goal.get())[1]<<
+                 " " << (*goal.get())[2] << "\n";
 
 }
 
