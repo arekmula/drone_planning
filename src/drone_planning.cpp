@@ -28,7 +28,6 @@ Planner3D::Planner3D(ros::NodeHandle& _nodeHandle)
     : nodeHandle(_nodeHandle)
 {
     ROS_INFO("STARTED PLANNING");
-    configure();
 }
 
 Planner3D::~Planner3D()
@@ -266,57 +265,26 @@ bool Planner3D::checkApproximateSolution(ompl::base::ProblemDefinition* pdef, do
         return false;
 }
 
-nav_msgs::Path Planner3D::planPath(const octomap_msgs::Octomap& octomapMsg)
+nav_msgs::Path Planner3D::planPath()
 {
-    /// converting octomap message to AbstractOcTree
-    octomap::AbstractOcTree* my_tree = octomap_msgs::fullMsgToMap(octomapMsg);
-    /// casting AbstractOcTree to OcTree
-    globalOctomapOcTree = dynamic_cast<octomap::OcTree*>(my_tree);
-    /// converting from octomap::OcTree to fcl::OcTree
-    globalFCLOcTree = new fcl::OcTree<float>(std::shared_ptr<const octomap::OcTree>(globalOctomapOcTree));
-    std::cout << globalFCLOcTree->getDefaultOccupancy() << "\n"; /// example of getting to FCL:OcTree data
-    /// create CollisionGeomeetry from OcTree
-    globalCollisionGeometryOcTree = std::shared_ptr<fcl::CollisionGeometry<float>>(globalFCLOcTree);
-
-    fcl::Matrix3f Roctomap; /// rotation matrix of octomap
-    fcl::Vector3f Toctomap; /// translation vector of octomap
-    /// get translation of octomap
-    Toctomap(0)=globalOctomapOcTree->getBBXCenter().x();
-    Toctomap(1)=globalOctomapOcTree->getBBXCenter().y();
-    Toctomap(2)=globalOctomapOcTree->getBBXCenter().z();
-    /// get rotation of octomap as euler
-    fcl::AngleAxisf rollAngle(globalOctomapOcTree->getBBXCenter().roll(),fcl::Vector3f::UnitZ());
-    fcl::AngleAxisf pitchAngle(globalOctomapOcTree->getBBXCenter().pitch(),fcl::Vector3f::UnitX());
-    fcl::AngleAxisf yawAngle(globalOctomapOcTree->getBBXCenter().yaw(),fcl::Vector3f::UnitY());
-    /// convert it to quaternion
-    fcl::Quaternion<float> q = rollAngle*pitchAngle*yawAngle;
-    /// convert it to rotation matrix
-    Roctomap = q.matrix();
-    /// get transform of octomap
-    fcl::Transform3f poseOctomap = fcl::Transform3f::Identity();
-    poseOctomap.linear()=Roctomap;
-    poseOctomap.translation()=Toctomap;
-    /// create collision object of octomap
-    /// it is used in isStateValid to check collision with drone
-    globalCollisionObjectOcTree = new fcl::CollisionObjectf(globalCollisionGeometryOcTree, poseOctomap);
-
     /// planned Path
     nav_msgs::Path plannedPath;
-    /// creating space information for the state space
-    auto si(std::make_shared<ompl::base::SpaceInformation>(space));
-    ///Set the state validity checker
-    si->setStateValidityChecker(isStateValid);
+
     /// create problem definition
     auto pdef(std::make_shared<ompl::base::ProblemDefinition>(si));
     /// set the start and goal states for the problem definiton
     pdef->setStartAndGoalStates(*start.get(),*goal.get());
     std::cout << "Start used by planner: " << *start.get() << "\n";
     std::cout << "Goal used by planner: " << *goal.get() << "\n";
+
+
     /*
      * CHOOSE YOUR FIGHTER HERE
      */
     /// create instance of planner
     auto planner(std::make_shared<ompl::geometric::RRTConnect>(si));
+
+
     /// tell planner which problem we are intrested in solving
     planner->setProblemDefinition(pdef);
     /// setup the planner, after all settings for the space and planner are done
@@ -419,7 +387,7 @@ void Planner3D::getStartPosition(float &xPos, float &yPos, float &zPos)
     zPos = zStart;
 }
 
-void Planner3D::configure(void)
+void Planner3D::configure(const octomap_msgs::Octomap& octomapMsg)
 {
     dim = 3; ///3D Problem
 
@@ -481,6 +449,45 @@ void Planner3D::configure(void)
     xGoal = (*goal.get())[0];
     yGoal = (*goal.get())[1];
     zGoal = (*goal.get())[2];
+
+    /// converting octomap message to AbstractOcTree
+    octomap::AbstractOcTree* my_tree = octomap_msgs::fullMsgToMap(octomapMsg);
+    /// casting AbstractOcTree to OcTree
+    globalOctomapOcTree = dynamic_cast<octomap::OcTree*>(my_tree);
+    /// converting from octomap::OcTree to fcl::OcTree
+    globalFCLOcTree = new fcl::OcTree<float>(std::shared_ptr<const octomap::OcTree>(globalOctomapOcTree));
+    std::cout << globalFCLOcTree->getDefaultOccupancy() << "\n"; /// example of getting to FCL:OcTree data
+    /// create CollisionGeomeetry from OcTree
+    globalCollisionGeometryOcTree = std::shared_ptr<fcl::CollisionGeometry<float>>(globalFCLOcTree);
+
+    fcl::Matrix3f Roctomap; /// rotation matrix of octomap
+    fcl::Vector3f Toctomap; /// translation vector of octomap
+    /// get translation of octomap
+    Toctomap(0)=globalOctomapOcTree->getBBXCenter().x();
+    Toctomap(1)=globalOctomapOcTree->getBBXCenter().y();
+    Toctomap(2)=globalOctomapOcTree->getBBXCenter().z();
+    /// get rotation of octomap as euler
+    fcl::AngleAxisf rollAngle(globalOctomapOcTree->getBBXCenter().roll(),fcl::Vector3f::UnitZ());
+    fcl::AngleAxisf pitchAngle(globalOctomapOcTree->getBBXCenter().pitch(),fcl::Vector3f::UnitX());
+    fcl::AngleAxisf yawAngle(globalOctomapOcTree->getBBXCenter().yaw(),fcl::Vector3f::UnitY());
+    /// convert it to quaternion
+    fcl::Quaternion<float> q = rollAngle*pitchAngle*yawAngle;
+    /// convert it to rotation matrix
+    Roctomap = q.matrix();
+    /// get transform of octomap
+    fcl::Transform3f poseOctomap = fcl::Transform3f::Identity();
+    poseOctomap.linear()=Roctomap;
+    poseOctomap.translation()=Toctomap;
+    /// create collision object of octomap
+    /// it is used in isStateValid to check collision with drone
+    globalCollisionObjectOcTree = new fcl::CollisionObjectf(globalCollisionGeometryOcTree, poseOctomap);
+
+    /// creating space information for the state space
+    si.reset(new ompl::base::SpaceInformation(space));
+    ///Set the state validity checker
+    si->setStateValidityChecker(isStateValid);
+
+    std::cout <<"CONFIGURED" << "\n";
 
 }
 

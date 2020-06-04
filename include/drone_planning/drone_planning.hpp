@@ -134,10 +134,14 @@ public:
      * plan path
      * @param octomapMsg - Octomap message of enviroment
      */
-    nav_msgs::Path planPath(const octomap_msgs::Octomap& octomapMsg);
+    nav_msgs::Path planPath();
 
     /// get current start Position - > Useful in visualization
     void getStartPosition(float &xPos, float &yPos, float &zPos);
+
+
+    /// configure
+    void configure(const octomap_msgs::Octomap& octomapMsg);
 
 
 private:
@@ -165,9 +169,8 @@ private:
 
     /// space of problem
     std::shared_ptr<ompl::base::SE3StateSpace> space;
-
-    /// configure
-    void configure(void);
+    /// space information
+    std::shared_ptr<ompl::base::SpaceInformation> si;
 
     /// get new random goal state
     void randomizeNewGoalState(void);

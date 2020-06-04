@@ -31,6 +31,8 @@ nav_msgs::OccupancyGrid globalOccupancyMap;
 visualization_msgs::MarkerArray markerArray;
 visualization_msgs::Marker marker;
 
+bool INITALIZATION = true;
+
 void octomapCallback(const octomap_msgs::OctomapPtr& msg)
 {
     globalOctoMap = *msg;
@@ -220,19 +222,25 @@ int main(int argc, char **argv)
     /// path Publisher
     ros::Publisher path_pub = node.advertise<nav_msgs::Path>("my_path",1000);
 
-
     while (ros::ok()){
         nav_msgs::Path plannedPath;
 
         /// calculating path
         if(globalOctoMap.data.size()>0) /// make sure that node has subsribed to octomap data
         {
-            /// finding path
-            plannedPath = planner_.planPath(globalOctoMap);
-            /// publishing path
-            path_pub.publish(plannedPath);
-            /// moving drone
-            moveDrone(plannedPath,odom_pub, broadcaster, vis_pub, planner_);
+            if (INITALIZATION)
+            {
+                planner_.configure(globalOctoMap);
+                INITALIZATION = false;
+            }
+            else{
+                /// finding path
+                plannedPath = planner_.planPath();
+                /// publishing path
+                path_pub.publish(plannedPath);
+                /// moving drone
+                moveDrone(plannedPath,odom_pub, broadcaster, vis_pub, planner_);
+            }
         }
 
         ros::spinOnce();
