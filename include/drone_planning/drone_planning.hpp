@@ -73,8 +73,16 @@
 #include <grid_map_octomap/grid_map_octomap.hpp>
 #include <moveit/ompl_interface/ompl_interface.h>
 
-#include <ompl/geometric/planners/rrt/RRTConnect.h>
+
 #include <ompl/geometric/planners/prm/LazyPRMstar.h>
+#include <ompl/geometric/planners/prm/LazyPRM.h>
+#include <ompl/geometric/planners/prm/PRMstar.h>
+#include <ompl/geometric/planners/prm/PRM.h>
+
+#include <ompl/geometric/planners/rrt/RRTstar.h>
+#include <ompl/geometric/planners/rrt/InformedRRTstar.h>
+#include <ompl/geometric/planners/rrt/RRTConnect.h>
+
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <ompl/base/spaces/RealVectorBounds.h>
 #include <ompl/base/spaces/SE3StateSpace.h>
@@ -169,6 +177,9 @@ private:
 
     /// extract path function
     nav_msgs::Path extractPath(ompl::base::ProblemDefinition* pdef);
+
+    /// check approximate solution function
+    bool checkApproximateSolution(ompl::base::ProblemDefinition* pdef, double errorThreshold);
 
     /// add intresting goal positions to vector
     void addIntrestingGoalPositions(void);
