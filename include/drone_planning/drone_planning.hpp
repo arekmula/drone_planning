@@ -171,6 +171,8 @@ private:
     std::shared_ptr<ompl::base::SE3StateSpace> space;
     /// space information
     std::shared_ptr<ompl::base::SpaceInformation> si;
+    /// problem definition
+    std::shared_ptr<ompl::base::ProblemDefinition> pdef;
 
     /// get new random goal state
     void randomizeNewGoalState(void);
