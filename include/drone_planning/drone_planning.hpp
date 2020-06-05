@@ -82,6 +82,7 @@
 #include <ompl/geometric/planners/rrt/RRTstar.h>
 #include <ompl/geometric/planners/rrt/InformedRRTstar.h>
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
+#include <ompl/base/Planner.h>
 
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <ompl/base/spaces/RealVectorBounds.h>
@@ -173,6 +174,22 @@ private:
     std::shared_ptr<ompl::base::SpaceInformation> si;
     /// problem definition
     std::shared_ptr<ompl::base::ProblemDefinition> pdef;
+
+    /* **************************************************************************
+     * CHOOSE YOUR FIGHTER BELOW and in configure() method
+     * Remember to check if you use single query planner or multi-query planner.
+     * Remember to check if you imported library of used planner
+     * Look for usage of clearQuery() and clear() functions in planPath() method.
+     * *************************************************************************/
+    /// planner definition
+    std::shared_ptr<ompl::geometric::LazyPRMstar> planner;
+    /* **************************************************************************
+     * CHOOSE YOUR FIGHTER ABOVE
+     * **************************************************************************/
+
+
+    /// time which planner can use for searching and returning possible path
+    double SOLVING_TIME = 3.0;
 
     /// get new random goal state
     void randomizeNewGoalState(void);
