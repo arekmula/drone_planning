@@ -73,8 +73,17 @@
 #include <grid_map_octomap/grid_map_octomap.hpp>
 #include <moveit/ompl_interface/ompl_interface.h>
 
-#include <ompl/geometric/planners/rrt/RRTConnect.h>
+
 #include <ompl/geometric/planners/prm/LazyPRMstar.h>
+#include <ompl/geometric/planners/prm/LazyPRM.h>
+#include <ompl/geometric/planners/prm/PRMstar.h>
+#include <ompl/geometric/planners/prm/PRM.h>
+
+#include <ompl/geometric/planners/rrt/RRTstar.h>
+#include <ompl/geometric/planners/rrt/InformedRRTstar.h>
+#include <ompl/geometric/planners/rrt/RRTConnect.h>
+#include <ompl/base/Planner.h>
+
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <ompl/base/spaces/RealVectorBounds.h>
 #include <ompl/base/spaces/SE3StateSpace.h>
@@ -126,10 +135,14 @@ public:
      * plan path
      * @param octomapMsg - Octomap message of enviroment
      */
-    nav_msgs::Path planPath(const octomap_msgs::Octomap& octomapMsg);
+    nav_msgs::Path planPath();
 
     /// get current start Position - > Useful in visualization
     void getStartPosition(float &xPos, float &yPos, float &zPos);
+
+
+    /// configure
+    void configure(const octomap_msgs::Octomap& octomapMsg);
 
 
 private:
@@ -157,9 +170,26 @@ private:
 
     /// space of problem
     std::shared_ptr<ompl::base::SE3StateSpace> space;
+    /// space information
+    std::shared_ptr<ompl::base::SpaceInformation> si;
+    /// problem definition
+    std::shared_ptr<ompl::base::ProblemDefinition> pdef;
 
-    /// configure
-    void configure(void);
+    /* **************************************************************************
+     * CHOOSE YOUR FIGHTER BELOW and in configure() method
+     * Remember to check if you use single query planner or multi-query planner.
+     * Remember to check if you imported library of used planner
+     * Look for usage of clearQuery() and clear() functions in planPath() method.
+     * *************************************************************************/
+    /// planner definition
+    std::shared_ptr<ompl::geometric::LazyPRMstar> planner;
+    /* **************************************************************************
+     * CHOOSE YOUR FIGHTER ABOVE
+     * **************************************************************************/
+
+
+    /// time which planner can use for searching and returning possible path
+    double SOLVING_TIME = 3.0;
 
     /// get new random goal state
     void randomizeNewGoalState(void);
@@ -169,6 +199,9 @@ private:
 
     /// extract path function
     nav_msgs::Path extractPath(ompl::base::ProblemDefinition* pdef);
+
+    /// check approximate solution function
+    bool checkApproximateSolution(ompl::base::ProblemDefinition* pdef, double errorThreshold);
 
     /// add intresting goal positions to vector
     void addIntrestingGoalPositions(void);
