@@ -30,6 +30,8 @@ sensor_msgs::PointCloud2 globalPointCloud;
 nav_msgs::OccupancyGrid globalOccupancyMap;
 visualization_msgs::MarkerArray markerArray;
 visualization_msgs::Marker marker;
+visualization_msgs::Marker point;
+visualization_msgs::MarkerArray points;
 
 bool INITALIZATION = true;
 
@@ -87,19 +89,19 @@ void moveDrone(const nav_msgs::Path& plannedPath, const ros::Publisher& odom_pub
         odom.header.stamp = ros::Time::now();
         odom.header.frame_id = "odom";
 
-        //set the position
+        ///set the position
         odom.pose.pose.position.x = 0;
         odom.pose.pose.position.y = 0;
         odom.pose.pose.position.z = 0.0;
         odom.pose.pose.orientation = odom_quat;
 
-        //set the velocity
+        ///set the velocity
         odom.child_frame_id = "drone";
         odom.twist.twist.linear.x = 0;
         odom.twist.twist.linear.y = 0;
         odom.twist.twist.angular.z = 0;
 
-        //publish the message
+        ///publish the message
         odom_pub.publish(odom);
 
         /// Drone marek pose
@@ -198,6 +200,48 @@ void moveDrone(const nav_msgs::Path& plannedPath, const ros::Publisher& odom_pub
 
 }
 
+void visPoints(const nav_msgs::Path& plannedPath, const ros::Publisher& odom_pub,tf::TransformBroadcaster& broadcaster,
+          const ros::Publisher& vis_points, drone_planning::Planner3D planner_)
+{
+    for (int i = 0 ; i < plannedPath.poses.size() ; i++)
+    {
+        /// Visualization marker
+        point.header.frame_id = "odom";
+        point.header.stamp = ros::Time();
+        point.ns = "my_namespace_points";
+        point.id = 0;
+        point.type = visualization_msgs::Marker::SPHERE;
+        point.action = visualization_msgs::Marker::ADD;
+        point.scale.x = 0.5;
+        point.scale.y = 0.5;
+        point.scale.z = 0.5;
+        point.color.a = 1.0; // Don't forget to set the alpha!
+        point.color.r = 0.0;
+        point.color.g = 0.0;
+        point.color.b = 1.0;
+        /// Points marker orientation
+        point.pose.orientation.x = 0;
+        point.pose.orientation.y = 0;
+        point.pose.orientation.z = 0;
+        point.pose.orientation.w = 1;
+
+        /// Points marek pose
+        point.pose.position.x = plannedPath.poses[i].pose.position.x;
+        point.pose.position.y = plannedPath.poses[i].pose.position.y;
+        point.pose.position.z = plannedPath.poses[i].pose.position.z;
+
+        /// ADD POINTS
+        point.action = visualization_msgs::Marker::ADD;
+
+        /// publishing marker point
+        vis_points.publish(point);
+    }
+
+
+/**/
+
+
+}
 
 int main(int argc, char **argv)
 {
@@ -214,7 +258,7 @@ int main(int argc, char **argv)
     ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odom", 50);
     tf::TransformBroadcaster broadcaster;
     ros::Publisher vis_pub = node.advertise<visualization_msgs::Marker>( "visualization_marker", 1000 );
-
+    ros::Publisher vis_points = node.advertise<visualization_msgs::Marker>( "visualization_points", 1000 );
 
     /// subscribers to full octomap, octomap point cloud and markerArray
     ros::Subscriber octomapFull_sub = node.subscribe("/octomap_full", 10, octomapCallback);
@@ -238,6 +282,8 @@ int main(int argc, char **argv)
                 plannedPath = planner_.planPath();
                 /// publishing path
                 path_pub.publish(plannedPath);
+                /// visualization points
+                visPoints(plannedPath,odom_pub, broadcaster, vis_points, planner_);
                 /// moving drone
                 moveDrone(plannedPath,odom_pub, broadcaster, vis_pub, planner_);
             }

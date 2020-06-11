@@ -4,11 +4,11 @@
     
     <arg name="rvizconfig" default="$(find drone_planning)/rviz/drone_planning.rviz" /> 
     <node pkg="rviz" name="rviz" type="rviz" output="screen" args="-d $(arg rvizconfig)"/> 
-	<param name="robot_description" command="$(find xacro)/xacro.py $(find drone_planning)/urdf/quadrotor.urdf.xacro"/>
+	   <!--<param name="robot_description" command="$(find xacro)/xacro.py $(find drone_planning)/urdf/quadrotor.urdf.xacro"/>
         <param name="robot_description_semantic" textfile="$(find drone_planning)/moveit_config/config/quadrotor.srdf" /> 
         <param name="use_gui" value="True"/>
 
-   <!-- <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" ></node>-->
+ <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" ></node>-->
    <!--  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />-->
 
       <!-- Robot state publisher for the TFs -->

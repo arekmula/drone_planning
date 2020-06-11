@@ -27,7 +27,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: PointCloud2
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -58,7 +58,7 @@ Visualization Manager:
       Marker Topic: /occupied_cells_vis_array
       Name: MarkerArray
       Namespaces:
-        map: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -114,22 +114,6 @@ Visualization Manager:
       Topic: /drone_planning_node/my_path
       Unreliable: false
       Value: true
-    - Alpha: 1
-      Class: rviz/RobotModel
-      Collision Enabled: false
-      Enabled: false
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-      Name: RobotModel
-      Robot Description: robot_description
-      TF Prefix: ""
-      Update Interval: 0
-      Value: false
-      Visual Enabled: true
     - Class: rviz/TF
       Enabled: false
       Frame Timeout: 15
@@ -149,7 +133,15 @@ Visualization Manager:
       Marker Topic: /drone_planning_node/visualization_marker
       Name: Marker
       Namespaces:
-        my_namespace: true
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /drone_planning_node/visualization_points
+      Name: Marker
+      Namespaces:
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -180,7 +172,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10.091282844543457
+      Distance: 4.112904071807861
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -195,10 +187,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.3753962516784668
+      Pitch: 0.41539618372917175
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.6404021978378296
+      Yaw: 3.4654006958007812
     Saved: ~
 Window Geometry:
   Displays:

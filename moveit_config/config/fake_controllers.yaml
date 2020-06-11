@@ -1,4 +1,0 @@
-controller_list:
-  - name: fake_ardrone_grup_controller
-    joints:
-      []
