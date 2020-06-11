@@ -200,15 +200,15 @@ void moveDrone(const nav_msgs::Path& plannedPath, const ros::Publisher& odom_pub
 
 }
 
-void visPoints(const nav_msgs::Path& plannedPath, const ros::Publisher& odom_pub,tf::TransformBroadcaster& broadcaster,
-          const ros::Publisher& vis_points, drone_planning::Planner3D planner_)
+void visPoints(const ros::Publisher& vis_points, drone_planning::Planner3D planner_)
 {
-    for (int i = 0 ; i < plannedPath.poses.size() ; i++)
-    {
-        /// Visualization marker
+        /// Goal point
+        float xGoal =0.0 , yGoal = 0.0 , zGoal = 0.0;
+        planner_.getGoalPosition(xGoal, yGoal, zGoal);
+        /// Visualization goal point
         point.header.frame_id = "odom";
         point.header.stamp = ros::Time();
-        point.ns = "my_namespace_points";
+        point.ns = "my_namespace_goal_point";
         point.id = 0;
         point.type = visualization_msgs::Marker::SPHERE;
         point.action = visualization_msgs::Marker::ADD;
@@ -216,9 +216,10 @@ void visPoints(const nav_msgs::Path& plannedPath, const ros::Publisher& odom_pub
         point.scale.y = 0.5;
         point.scale.z = 0.5;
         point.color.a = 1.0; // Don't forget to set the alpha!
-        point.color.r = 0.0;
+        point.color.r = 1.0;
         point.color.g = 0.0;
-        point.color.b = 1.0;
+        point.color.b = 0.0;
+
         /// Points marker orientation
         point.pose.orientation.x = 0;
         point.pose.orientation.y = 0;
@@ -226,20 +227,17 @@ void visPoints(const nav_msgs::Path& plannedPath, const ros::Publisher& odom_pub
         point.pose.orientation.w = 1;
 
         /// Points marek pose
-        point.pose.position.x = plannedPath.poses[i].pose.position.x;
-        point.pose.position.y = plannedPath.poses[i].pose.position.y;
-        point.pose.position.z = plannedPath.poses[i].pose.position.z;
-
+        point.pose.position.x = xGoal;
+        point.pose.position.y = yGoal;
+        point.pose.position.z = zGoal;
+        std::cout << "Visualized goal point: " << xGoal << " " << yGoal << " " << zGoal << "\n";
         /// ADD POINTS
         point.action = visualization_msgs::Marker::ADD;
 
         /// publishing marker point
         vis_points.publish(point);
-    }
-
 
 /**/
-
 
 }
 
@@ -272,6 +270,10 @@ int main(int argc, char **argv)
         /// calculating path
         if(globalOctoMap.data.size()>0) /// make sure that node has subsribed to octomap data
         {
+
+            /// visualization goal points
+            visPoints(vis_points, planner_);
+
             if (INITALIZATION)
             {
                 planner_.configure(globalOctoMap);
@@ -282,8 +284,6 @@ int main(int argc, char **argv)
                 plannedPath = planner_.planPath();
                 /// publishing path
                 path_pub.publish(plannedPath);
-                /// visualization points
-                visPoints(plannedPath,odom_pub, broadcaster, vis_points, planner_);
                 /// moving drone
                 moveDrone(plannedPath,odom_pub, broadcaster, vis_pub, planner_);
             }

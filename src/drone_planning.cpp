@@ -390,6 +390,14 @@ void Planner3D::getStartPosition(float &xPos, float &yPos, float &zPos)
     zPos = zStart;
 }
 
+void Planner3D::getGoalPosition(float &xGoalPos, float &yGoalPos, float &zGoalPos)
+{
+    /// return goal position to visualization function
+    xGoalPos = xGoal;
+    yGoalPos = yGoal;
+    zGoalPos = zGoal;
+}
+
 void Planner3D::configure(const octomap_msgs::Octomap& octomapMsg)
 {
     dim = 3; ///3D Problem
