@@ -139,10 +139,11 @@ public:
 
     /// get current start Position - > Useful in visualization
     void getStartPosition(float &xPos, float &yPos, float &zPos);
-
+    void getGoalPosition(float &xGoalPos, float &yGoalPos, float &zGoalPos);
 
     /// configure
     void configure(const octomap_msgs::Octomap& octomapMsg);
+
 
 
 private:
@@ -210,9 +211,8 @@ private:
     bool initialMove = true;
 
     /// Goal and start positions. Useful in visualization
-    float xGoal, yGoal, zGoal;
     float xStart, yStart, zStart;
-
+    float xGoal, yGoal, zGoal;
 
 };
 
