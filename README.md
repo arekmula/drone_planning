@@ -33,7 +33,7 @@ std::shared_ptr <ompl::geometric::LazyPRMstar> planner;
 ```cpp
 planner.reset(new ompl::geometric::LazyPRMstar(si));
 ```
-- change planner clearing function in planPath() depending if you use multi-query function or single-query function
+- change planner clearing function in planPath() depending if you use multi-query planner or single-query planner
  ```cpp
  // if you use multi-query planner uncomment line below and comment line with clear() method
  planner->clearQuery();
