@@ -71,10 +71,8 @@ bool isStateValid(const ompl::base::State *state)
     fcl::Transform3f pose = fcl::Transform3f::Identity(); /// pose of drone
     pose.linear()=R;
     pose.translation()=T;
-    /// geom and pose(tf in tutorial, https://github.com/flexible-collision-library/fcl)
-    /// are the geometry and the transform of the object
-    // (?) not sure about this pose variable (?)
-    fcl::CollisionObjectf* drone = new fcl::CollisionObjectf(geom,pose); /// collision object of drone
+    /// create collision object of drone
+    fcl::CollisionObjectf* drone = new fcl::CollisionObjectf(geom,pose);
     /// create request and result variables
     fcl::CollisionRequest<float> request;
     fcl::CollisionResult<float> result;
@@ -467,7 +465,6 @@ void Planner3D::configure(const octomap_msgs::Octomap& octomapMsg)
     globalOctomapOcTree = dynamic_cast<octomap::OcTree*>(my_tree);
     /// converting from octomap::OcTree to fcl::OcTree
     globalFCLOcTree = new fcl::OcTree<float>(std::shared_ptr<const octomap::OcTree>(globalOctomapOcTree));
-    std::cout << globalFCLOcTree->getDefaultOccupancy() << "\n"; /// example of getting to FCL:OcTree data
     /// create CollisionGeomeetry from OcTree
     globalCollisionGeometryOcTree = std::shared_ptr<fcl::CollisionGeometry<float>>(globalFCLOcTree);
 

@@ -258,7 +258,7 @@ int main(int argc, char **argv)
     ros::Publisher vis_pub = node.advertise<visualization_msgs::Marker>( "visualization_marker", 1000 );
     ros::Publisher vis_points = node.advertise<visualization_msgs::Marker>( "visualization_points", 1000 );
 
-    /// subscribers to full octomap, octomap point cloud and markerArray
+    /// subscriber to full octomap
     ros::Subscriber octomapFull_sub = node.subscribe("/octomap_full", 10, octomapCallback);
 
     /// path Publisher
